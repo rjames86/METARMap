@@ -1,3 +1,5 @@
-sudo python /NeoSectional/test.py
-sudo python /NeoSectional/metar.py
+#!/bin/bash
+
+sudo python /METARmaps/test.py
+sudo python /METARmaps/metar.py
 
