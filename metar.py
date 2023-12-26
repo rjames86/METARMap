@@ -4,11 +4,7 @@
 
 import urllib2
 import xml.etree.ElementTree as ET
-import time
 from neopixel import *
-import sys
-import os
-
 
 # LED strip configuration:
 LED_COUNT = 249  # Number of LED pixels.
@@ -20,26 +16,6 @@ LED_BRIGHTNESS = 12  # Set to 0 for darkest and 255 for brightest
 LED_INVERT = False  # True to invert the signal (when using NPN transistor level shift)
 LED_CHANNEL = 0  # set to '1' for GPIOs 13, 19, 41, 45 or 53
 LED_STRIP = ws.WS2811_STRIP_GRB  # Strip type and colour ordering
-
-
-# def wheel(pos):
-#        """Generate rainbow colors across 0-255 positions."""
-#        if pos < 85:
-#                return Color(pos * 3, 255 - pos * 3, 0)
-#        elif pos < 170:
-#                pos -= 85
-#                return Color(255 - pos * 3, 0, pos * 3)
-#        else:
-#                pos -= 170
-#                return Color(0, pos * 3, 255 - pos * 3)
-
-# def rainbowCycle(strip, wait_ms=2, iterations=1):
-#        """Draw rainbow that uniformly distributes itself across all pixels."""
-#        for j in range(256*iterations):
-#                for i in range(strip.numPixels()):
-#                        strip.setPixelColor(i, wheel((int(i * 256 / strip.numPixels()) + j) & 255))
-#                strip.show()
-# time.sleep(wait_ms/1000.0)
 
 
 strip = Adafruit_NeoPixel(
@@ -97,12 +73,6 @@ for metar in root.iter("METAR"):
     else:
         mydict[stationId] = flightCateory
 
-
-# print mydict
-
-# rainbowCycle(strip)
-
-
 i = 0
 for airportcode in airports:
     if airportcode == "NULL":
@@ -118,10 +88,11 @@ for airportcode in airports:
     BLUE = Color(0, 0, 255)
     RED = Color(0, 255, 0)
     PURPLE = Color(0, 128, 128)
+    YELLOW = Color(255, 255, 0)
     WHITE = Color(255, 255, 255)
 
     FLIGHT_CATEGORY_TO_COLOR = {
-        "VFR": GREEN,
+        "VFR": YELLOW,
         "MVFR": BLUE,
         "IFR": RED,
         "LIFR": PURPLE,
