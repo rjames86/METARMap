@@ -66,12 +66,12 @@ for metar in root.iter("METAR"):
         print("Skipping")
         continue
 
-    flightCateory = metar.find("flight_category").text
-    print(stationId + " " + flightCateory)
+    flightCategory = metar.find("flight_category").text
+    print(stationId + " " + flightCategory)
     if stationId in mydict:
         print("duplicate, only save first metar")
     else:
-        mydict[stationId] = flightCateory
+        mydict[stationId] = flightCategory
 
 i = 0
 for airportcode in airports:
@@ -81,8 +81,8 @@ for airportcode in airports:
     print
     color = Color(0, 0, 0)
 
-    flightCateory = mydict.get(airportcode, "No")
-    print(airportcode + " " + flightCateory)
+    flightCategory = mydict.get(airportcode, "No")
+    print(airportcode + " " + flightCategory)
 
     GREEN = Color(255, 0, 0)
     BLUE = Color(0, 0, 255)
@@ -98,9 +98,9 @@ for airportcode in airports:
         "LIFR": PURPLE,
     }
 
-    if flightCateory != "No":
+    if flightCategory != "No":
         color = FLIGHT_CATEGORY_TO_COLOR.get(
-            flightCateory, WHITE
+            flightCategory, WHITE
         )  # retuns either a color or None
     else:
         color = Color(255, 255, 255)
@@ -112,7 +112,7 @@ for airportcode in airports:
         + " for "
         + airportcode
         + " "
-        + flightCateory
+        + flightCategory
         + " "
         + str(color)
     )
