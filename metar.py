@@ -28,7 +28,7 @@ YELLOW = Color(255, 255, 0)
 WHITE = Color(255, 255, 255)
 
 FLIGHT_CATEGORY_TO_COLOR = {
-    "VFR": YELLOW,
+    "VFR": GREEN,
     "MVFR": BLUE,
     "IFR": RED,
     "LIFR": PURPLE,
