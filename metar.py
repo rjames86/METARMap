@@ -4,7 +4,9 @@
 
 import urllib2
 import xml.etree.ElementTree as ET
-from neopixel import *
+from neopixel import Adafruit_NeoPixel, Color, ws
+
+from airports import AIRPORT_CODES
 
 # LED strip configuration:
 LED_COUNT = 249  # Number of LED pixels.
@@ -16,6 +18,21 @@ LED_BRIGHTNESS = 12  # Set to 0 for darkest and 255 for brightest
 LED_INVERT = False  # True to invert the signal (when using NPN transistor level shift)
 LED_CHANNEL = 0  # set to '1' for GPIOs 13, 19, 41, 45 or 53
 LED_STRIP = ws.WS2811_STRIP_GRB  # Strip type and colour ordering
+
+BLACK = Color(0, 0, 0)
+GREEN = Color(255, 0, 0)
+BLUE = Color(0, 0, 255)
+RED = Color(0, 255, 0)
+PURPLE = Color(0, 128, 128)
+YELLOW = Color(255, 255, 0)
+WHITE = Color(255, 255, 255)
+
+FLIGHT_CATEGORY_TO_COLOR = {
+    "VFR": YELLOW,
+    "MVFR": BLUE,
+    "IFR": RED,
+    "LIFR": PURPLE,
+}
 
 
 strip = Adafruit_NeoPixel(
@@ -32,20 +49,11 @@ strip = Adafruit_NeoPixel(
 
 strip.begin()
 
-
-with open("/METARmaps/airports") as f:
-    airports = f.readlines()
-airports = [x.strip() for x in airports]
-print(airports)
-
-
-mydict = {"": ""}
+AIRPORT_TO_FLIGHT_CATEGORY = {}
 
 
 url = "https://aviationweather.gov/cgi-bin/data/dataserver.php?dataSource=metars&requestType=retrieve&format=xml&hoursBeforeNow=1.5&stationString="
-for airportcode in airports:
-    if airportcode == "NULL":
-        continue
+for airportcode in AIRPORT_CODES:
     print(airportcode)
     url = url + airportcode + ","
 
@@ -58,8 +66,6 @@ root = ET.fromstring(content)
 
 
 for metar in root.iter("METAR"):
-    if airportcode == "NULL":
-        continue
     stationId = metar.find("station_id").text
     print(stationId)
     if metar.find("flight_category") is None:
@@ -68,43 +74,15 @@ for metar in root.iter("METAR"):
 
     flightCategory = metar.find("flight_category").text
     print(stationId + " " + flightCategory)
-    if stationId in mydict:
-        print("duplicate, only save first metar")
-    else:
-        mydict[stationId] = flightCategory
+    AIRPORT_TO_FLIGHT_CATEGORY.setdefault(stationId, flightCategory)
 
-i = 0
-for airportcode in airports:
-    if airportcode == "NULL":
-        i = i + 1
-        continue
-    print
-    color = Color(0, 0, 0)
-
-    flightCategory = mydict.get(airportcode, "No")
+for index, airportcode in enumerate(AIRPORT_CODES):
+    flightCategory = AIRPORT_TO_FLIGHT_CATEGORY.get(airportcode)
     print(airportcode + " " + flightCategory)
 
-    GREEN = Color(255, 0, 0)
-    BLUE = Color(0, 0, 255)
-    RED = Color(0, 255, 0)
-    PURPLE = Color(0, 128, 128)
-    YELLOW = Color(255, 255, 0)
-    WHITE = Color(255, 255, 255)
-
-    FLIGHT_CATEGORY_TO_COLOR = {
-        "VFR": YELLOW,
-        "MVFR": BLUE,
-        "IFR": RED,
-        "LIFR": PURPLE,
-    }
-
-    if flightCategory != "No":
-        color = FLIGHT_CATEGORY_TO_COLOR.get(
-            flightCategory, WHITE
-        )  # retuns either a color or None
-    else:
-        color = Color(255, 255, 255)
-        print("N/A")
+    color = FLIGHT_CATEGORY_TO_COLOR.get(
+        flightCategory, WHITE
+    )  # retuns either a color or None
 
     print(
         "Setting light "
@@ -118,7 +96,5 @@ for airportcode in airports:
     )
     strip.setPixelColor(i, color)
     strip.show()
-
-    i = i + 1
 print
 print("fin")
