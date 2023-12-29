@@ -86,7 +86,7 @@ for index, airportcode in enumerate(AIRPORT_CODES):
 
     print(
         "Setting light "
-        + str(i)
+        + str(index)
         + " for "
         + airportcode
         + " "
@@ -94,7 +94,7 @@ for index, airportcode in enumerate(AIRPORT_CODES):
         + " "
         + str(color)
     )
-    strip.setPixelColor(i, color)
+    strip.setPixelColor(index, color)
     strip.show()
 print
 print("fin")
