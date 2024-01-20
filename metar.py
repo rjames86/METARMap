@@ -90,16 +90,16 @@ for index, airportcode in enumerate(AIRPORT_CODES):
             flightCategory, WHITE
         )  # retuns either a color or None
 
-    print(
-        "Setting light "
-        + str(index)
-        + " for "
-        + airportcode
-        + " "
-        + flightCategory
-        + " "
-        + str(color)
-    )
+        print(
+            "Setting light "
+            + str(index)
+            + " for "
+            + airportcode
+            + " "
+            + flightCategory
+            + " "
+            + str(color)
+        )
     strip.setPixelColor(index, color)
     strip.show()
 print
