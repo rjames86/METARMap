@@ -21,6 +21,8 @@ class MetarInfo:
         altimHg,
         obs,
         skyConditions,
+        latitude,
+        longitude
     ):
         self.airport_code = airport_code
         self.flightCategory = flightCategory
@@ -35,6 +37,8 @@ class MetarInfo:
         self.altimHg = altimHg
         self.obs = obs
         self.skyConditions = skyConditions
+        self.latitude = latitude
+        self.longitude = longitude
 
     def __repr__(self):
         return f'MetarInfo<airportcode={self.airport_code}, flight_category={self.flightCategory}>'
@@ -62,7 +66,13 @@ class MetarInfos(defaultdict):
             vis = 0
             altimHg = 0.0
             obs = ""
+            latitude = 0
+            longitude = 0
             skyConditions = []
+            if metar.find('latitude') is not None:
+                latitude = float(metar.find(latitude))
+            if metar.find('longitude') is not None:
+                longitude = float(metar.find(longitude))
             if metar.find("wind_gust_kt") is not None:
                 windGustSpeed = int(metar.find("wind_gust_kt").text)
                 # windGust = (True if (ALWAYS_BLINK_FOR_GUSTS or windGustSpeed > WIND_BLINK_THRESHOLD) else False)
@@ -106,6 +116,8 @@ class MetarInfos(defaultdict):
                 altimHg,
                 obs,
                 skyConditions,
+                latitude,
+                longitude
             )
         return cls
     
