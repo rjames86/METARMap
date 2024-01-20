@@ -24,7 +24,7 @@ class AirportLED:
                 + " "
                 + str(color)
             )
-            self.strip.setPixelColor(self.pixel_index, color)
+            self.strip[self.pixel_index] = color
 
 
 def get_airport_codes():
