@@ -98,8 +98,8 @@ class MetarInfos(defaultdict):
                 obs = metar.find("wx_string").text
             if metar.find("observation_time") is not None:
                 obsTime = datetime.datetime.fromisoformat(
-                    metar.find("observation_time").text.replace("Z", "+00:00").replace(tzinfo=datetime.timezone.utc)
-                )
+                    metar.find("observation_time").text.replace("Z", "+00:00")
+                ).replace(tzinfo=datetime.timezone.utc)
             for skyIter in metar.iter("sky_condition"):
                 skyCond = {
                     "cover": skyIter.get("sky_cover"),
