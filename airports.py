@@ -17,6 +17,8 @@ class AirportLED:
         try:
             while True:
                 print("running for ", self.airport_code)
+                if self.metar_info is None:
+                    print("no metar info found for %s. Returning..." % self.airport_code)
                 color = FLIGHT_CATEGORY_TO_COLOR.get(self.metar_info.flightCategory, WHITE)
                 print(
                     "Setting light "

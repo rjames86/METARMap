@@ -3,7 +3,7 @@ import xml.etree.ElementTree as ET
 import datetime
 import requests
 
-from airports import AIRPORT_CODES, get_airport_codes
+from airports import AIRPORT_CODES
 
 class MetarInfo:
     def __init__(
