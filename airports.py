@@ -36,8 +36,10 @@ class AirportLED:
         G, R, B = color
         dimming_level = 1
 
+        print(self.airport_code, self.metar_info.observation_time)
+
         sun = AstralSun(self.city.observer, tzinfo=self.city.tzinfo)
-        print(self.metar_info.observation_time, sun)
+        print(sun)
 
         # It's probably dark out
         if self.metar_info.observation_time < sun['dawn'] or self.metar_info.observation_time > sun['dusk']:
