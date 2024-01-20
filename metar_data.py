@@ -22,7 +22,8 @@ class MetarInfo:
         obs,
         skyConditions,
         latitude,
-        longitude
+        longitude,
+        obsTime
     ):
         self.airport_code = airport_code
         self.flightCategory = flightCategory
@@ -39,6 +40,7 @@ class MetarInfo:
         self.skyConditions = skyConditions
         self.latitude = latitude
         self.longitude = longitude
+        self.observation_time = obsTime
 
     def __repr__(self):
         return f'MetarInfo<airportcode={self.airport_code}, flight_category={self.flightCategory}>'
@@ -69,6 +71,8 @@ class MetarInfos(defaultdict):
             latitude = 0
             longitude = 0
             skyConditions = []
+            obsTime = None
+
             if metar.find('latitude') is not None:
                 latitude = float(metar.find('latitude').text)
             if metar.find('longitude') is not None:
@@ -94,7 +98,7 @@ class MetarInfos(defaultdict):
                 obs = metar.find("wx_string").text
             if metar.find("observation_time") is not None:
                 obsTime = datetime.datetime.fromisoformat(
-                    metar.find("observation_time").text.replace("Z", "+00:00")
+                    metar.find("observation_time").text.replace("Z", "+00:00").replace(tzinfo=datetime.timezone.utc)
                 )
             for skyIter in metar.iter("sky_condition"):
                 skyCond = {
@@ -117,7 +121,8 @@ class MetarInfos(defaultdict):
                 obs,
                 skyConditions,
                 latitude,
-                longitude
+                longitude,
+                obsTime
             )
         return cls
     

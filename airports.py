@@ -33,26 +33,25 @@ class AirportLED:
     def determine_brightness(self, color):
         if self.city is None:
             return color
-        
-        now = datetime.datetime.now().replace(tzinfo=datetime.timezone.utc)
         G, R, B = color
         dimming_level = 1
 
         sun = AstralSun(self.city.observer, tzinfo=self.city.tzinfo)
+        print(self.metar_info.observation_time, sun)
 
         # It's probably dark out
-        if now < sun['dawn'] or now > sun['dusk']:
+        if self.metar_info.observation_time < sun['dawn'] or self.metar_info.observation_time > sun['dusk']:
             print("before dawn or after dusk")
             dimming_level = 0.1
-        elif sun['dawn'] < now < sun['noon']:
+        elif sun['dawn'] < self.metar_info.observation_time < sun['noon']:
             print("between dawn and noon")
             total_seconds = sun['noon'] - sun['dawn']
-            seconds_until_noon = sun['noon'] - now
+            seconds_until_noon = sun['noon'] - self.metar_info.observation_time
             dimming_level = seconds_until_noon / total_seconds
-        elif sun['noon'] < now < sun['dusk']:
+        elif sun['noon'] < self.metar_info.observation_time < sun['dusk']:
             print("between noon and dusk")
             total_seconds = sun['dusk'] - sun['noon']
-            seconds_until_dusk = sun['dusk'] - now
+            seconds_until_dusk = sun['dusk'] - self.metar_info.observation_time
             dimming_level = seconds_until_dusk / total_seconds
 
         return (G * dimming_level, R * dimming_level, B * dimming_level)
