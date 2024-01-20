@@ -3,7 +3,7 @@ import xml.etree.ElementTree as ET
 import datetime
 import requests
 
-from airports import get_airport_codes
+from airports import AIRPORT_CODES, get_airport_codes
 
 class MetarInfo:
     def __init__(
@@ -110,7 +110,6 @@ class MetarInfos(defaultdict):
         return cls
     
 def get_metar_data():
-    AIRPORT_CODES = get_airport_codes()
     url = "https://aviationweather.gov/cgi-bin/data/dataserver.php?dataSource=metars&requestType=retrieve&format=xml&hoursBeforeNow=1.5&stationString="
     for airportcode in AIRPORT_CODES:
         url = url + airportcode + ","
