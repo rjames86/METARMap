@@ -1,4 +1,5 @@
 import os
+from asyncio import sleep
 
 from constants import FLIGHT_CATEGORY_TO_COLOR, WHITE
 
@@ -31,6 +32,7 @@ class AirportLED:
                     + str(color)
                 )
                 self.strip[self.pixel_index] = color
+                sleep(0)
         except Exception as e:
             print(e)
 
