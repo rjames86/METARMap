@@ -1,4 +1,5 @@
-from neopixel import Adafruit_NeoPixel, Color, ws
+import neopixel
+
 
 # LED strip configuration:
 LED_COUNT = 50  # Number of LED pixels.
@@ -9,15 +10,15 @@ LED_DMA = 10  # DMA channel to use for generating signal (try 5)
 LED_BRIGHTNESS = 12  # Set to 0 for darkest and 255 for brightest
 LED_INVERT = False  # True to invert the signal (when using NPN transistor level shift)
 LED_CHANNEL = 0  # set to '1' for GPIOs 13, 19, 41, 45 or 53
-LED_STRIP = ws.WS2811_STRIP_GRB  # Strip type and colour ordering
+# LED_STRIP = ws.WS2811_STRIP_GRB  # Strip type and colour ordering
 
-BLACK = Color(0, 0, 0)
-GREEN = Color(255, 0, 0)
-BLUE = Color(0, 0, 255)
-RED = Color(0, 255, 0)
-PURPLE = Color(0, 128, 128)
-YELLOW = Color(255, 255, 0)
-WHITE = Color(255, 255, 255)
+BLACK = (0, 0, 0)
+GREEN = (255, 0, 0)
+BLUE = (0, 0, 255)
+RED = (0, 255, 0)
+PURPLE = (0, 128, 128)
+YELLOW = (255, 255, 0)
+WHITE = (255, 255, 255)
 
 FLIGHT_CATEGORY_TO_COLOR = {
     "VFR": GREEN,
@@ -26,13 +27,9 @@ FLIGHT_CATEGORY_TO_COLOR = {
     "LIFR": PURPLE,
 }
 
-strip = Adafruit_NeoPixel(
-    LED_COUNT,
+strip = neopixel.NeoPixel(
     LED_PIN,
-    LED_FREQ_HZ,
-    LED_DMA,
-    LED_INVERT,
-    LED_BRIGHTNESS,
-    LED_CHANNEL,
-    LED_STRIP,
+    LED_COUNT,
+    brightness = LED_BRIGHTNESS,
+    auto_write=True
 )
