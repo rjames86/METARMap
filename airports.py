@@ -55,25 +55,22 @@ class AirportLED:
 
 
     async def run(self):
-        try:
-            while True:
-                print("running for ", self.airport_code)
-                if self.metar_info is None:
-                    print("no metar info found for %s. Returning..." % self.airport_code)
-                print(
-                    "Setting light "
-                    + str(self.pixel_index)
-                    + " for "
-                    + self.airport_code
-                    + " "
-                    + self.metar_info.flightCategory
-                    + " "
-                    + str(self.color)
-                )
-                self.strip[self.pixel_index] = self.determine_brightness(self.color)
-                await sleep(0)
-        except Exception as e:
-            print(e)
+        while True:
+            print("running for ", self.airport_code)
+            if self.metar_info is None:
+                print("no metar info found for %s. Returning..." % self.airport_code)
+            print(
+                "Setting light "
+                + str(self.pixel_index)
+                + " for "
+                + self.airport_code
+                + " "
+                + self.metar_info.flightCategory
+                + " "
+                + str(self.color)
+            )
+            self.strip[self.pixel_index] = self.determine_brightness(self.color)
+            await sleep(0)
 
 def get_airport_codes():
     with open(os.path.join(os.getcwd(), 'airports')) as f:

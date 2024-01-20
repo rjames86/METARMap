@@ -14,13 +14,12 @@ async def run():
         await results
     except Exception as e:
         print("Cancelling")
-        print(e)
         results.cancel()
+        raise e
 
 
 try:
     print("Starting...")
     asyncio.run(run())
 except Exception as e:
-    print(e)
-    pass
+    raise e
