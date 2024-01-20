@@ -1,5 +1,4 @@
-import random
-import asyncio
+import os
 
 from constants import FLIGHT_CATEGORY_TO_COLOR, WHITE
 
