@@ -1,6 +1,6 @@
 import asyncio
-from airports import AirportLED
-from constants import strip, AIRPORT_CODES
+from airports import AirportLED, AIRPORT_CODES
+from constants import strip
 from metar_data import get_metar_data
 
 async def run():
