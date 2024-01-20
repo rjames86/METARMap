@@ -50,10 +50,11 @@ strip = Adafruit_NeoPixel(
 strip.begin()
 
 AIRPORT_TO_FLIGHT_CATEGORY = {}
+AIRPORT_CODES = get_airport_codes()
 
 
 url = "https://aviationweather.gov/cgi-bin/data/dataserver.php?dataSource=metars&requestType=retrieve&format=xml&hoursBeforeNow=1.5&stationString="
-for airportcode in get_airport_codes():
+for airportcode in AIRPORT_CODES:
     print(airportcode)
     url = url + airportcode + ","
 
