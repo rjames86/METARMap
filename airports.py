@@ -14,21 +14,23 @@ class AirportLED:
         return f'AirportLED<{self.airport_code}>'
     
     async def run(self):
-        while True:
-            print("running for ", self.airport_code)
-            color = FLIGHT_CATEGORY_TO_COLOR.get(self.metar_info.flightCategory, WHITE)
-            print(
-                "Setting light "
-                + str(self.pixel_index)
-                + " for "
-                + self.airport_code
-                + " "
-                + self.metar_info.flightCategory
-                + " "
-                + str(color)
-            )
-            self.strip[self.pixel_index] = color
-
+        try:
+            while True:
+                print("running for ", self.airport_code)
+                color = FLIGHT_CATEGORY_TO_COLOR.get(self.metar_info.flightCategory, WHITE)
+                print(
+                    "Setting light "
+                    + str(self.pixel_index)
+                    + " for "
+                    + self.airport_code
+                    + " "
+                    + self.metar_info.flightCategory
+                    + " "
+                    + str(color)
+                )
+                self.strip[self.pixel_index] = color
+        except Exception as e:
+            print(e)
 
 def get_airport_codes():
     with open(os.path.join(os.getcwd(), 'airports')) as f:
