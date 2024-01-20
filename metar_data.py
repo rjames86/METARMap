@@ -1,7 +1,7 @@
 from collections import defaultdict
 import xml.etree.ElementTree as ET
 import datetime
-import urllib2
+import requests
 
 from airports import get_airport_codes
 
@@ -116,5 +116,5 @@ def get_metar_data():
         print(airportcode)
         url = url + airportcode + ","
 
-    content = urllib2.urlopen(url).read()
+    content = requests.get(url).text
     return MetarInfos.from_xml(content)
