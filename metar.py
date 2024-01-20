@@ -6,7 +6,7 @@ import urllib2
 import xml.etree.ElementTree as ET
 from neopixel import Adafruit_NeoPixel, Color, ws
 
-from airports import AIRPORT_CODES
+from airports import get_airport_codes
 
 # LED strip configuration:
 LED_COUNT = 249  # Number of LED pixels.
@@ -53,7 +53,7 @@ AIRPORT_TO_FLIGHT_CATEGORY = {}
 
 
 url = "https://aviationweather.gov/cgi-bin/data/dataserver.php?dataSource=metars&requestType=retrieve&format=xml&hoursBeforeNow=1.5&stationString="
-for airportcode in AIRPORT_CODES:
+for airportcode in get_airport_codes():
     print(airportcode)
     url = url + airportcode + ","
 
