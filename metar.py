@@ -16,8 +16,6 @@ async def run():
         print("Cancelling")
         results.cancel()
         raise e
-
-
 try:
     print("Starting...")
     asyncio.run(run())

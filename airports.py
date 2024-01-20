@@ -36,11 +36,12 @@ class AirportLED:
         G, R, B = color
         dimming_level = 1
 
-        print(self.airport_code, self.metar_info.observation_time)
+        print(self.airport_code, self.metar_info.observation_time, self.metar_info.observation_time.tzinfo)
 
         try:
             sun = AstralSun(self.city.observer, tzinfo=self.city.tzinfo)
             print(sun)
+            print(self.metar_info.observation_time < sun['dawn'], self.metar_info.observation_time > sun['dusk'])
             # It's probably dark out
             if self.metar_info.observation_time < sun['dawn'] or self.metar_info.observation_time > sun['dusk']:
                 print("before dawn or after dusk")
@@ -55,7 +56,7 @@ class AirportLED:
                 total_seconds = sun['dusk'] - sun['noon']
                 seconds_until_dusk = sun['dusk'] - self.metar_info.observation_time
                 dimming_level = seconds_until_dusk / total_seconds
-
+                print('set dim level to', dimming_level)
             return (G * dimming_level, R * dimming_level, B * dimming_level)
         except Exception as e:
             print("Failed set brightness", self.airport_code, self.metar_info.observation_time)
@@ -90,7 +91,6 @@ class AirportLED:
 def get_airport_codes():
     with open(os.path.join(os.getcwd(), 'airports')) as f:
         airports = f.readlines()
-    from random import choices
-    return choices([x.strip() for x in airports if x.strip()], k=50)
+    return [x.strip() for x in airports if x.strip()]
 
 AIRPORT_CODES = get_airport_codes()
