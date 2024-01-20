@@ -41,25 +41,25 @@ class AirportLED:
         try:
             sun = AstralSun(self.city.observer, tzinfo=self.city.tzinfo)
             print(sun)
-        except Exception e:
+            # It's probably dark out
+            if self.metar_info.observation_time < sun['dawn'] or self.metar_info.observation_time > sun['dusk']:
+                print("before dawn or after dusk")
+                dimming_level = 0.1
+            elif sun['dawn'] < self.metar_info.observation_time < sun['noon']:
+                print("between dawn and noon")
+                total_seconds = sun['noon'] - sun['dawn']
+                seconds_until_noon = sun['noon'] - self.metar_info.observation_time
+                dimming_level = seconds_until_noon / total_seconds
+            elif sun['noon'] < self.metar_info.observation_time < sun['dusk']:
+                print("between noon and dusk")
+                total_seconds = sun['dusk'] - sun['noon']
+                seconds_until_dusk = sun['dusk'] - self.metar_info.observation_time
+                dimming_level = seconds_until_dusk / total_seconds
+
+            return (G * dimming_level, R * dimming_level, B * dimming_level)
+        except Exception as e:
             print(self.airport_code, self.metar_info.observation_time)
 
-        # It's probably dark out
-        if self.metar_info.observation_time < sun['dawn'] or self.metar_info.observation_time > sun['dusk']:
-            print("before dawn or after dusk")
-            dimming_level = 0.1
-        elif sun['dawn'] < self.metar_info.observation_time < sun['noon']:
-            print("between dawn and noon")
-            total_seconds = sun['noon'] - sun['dawn']
-            seconds_until_noon = sun['noon'] - self.metar_info.observation_time
-            dimming_level = seconds_until_noon / total_seconds
-        elif sun['noon'] < self.metar_info.observation_time < sun['dusk']:
-            print("between noon and dusk")
-            total_seconds = sun['dusk'] - sun['noon']
-            seconds_until_dusk = sun['dusk'] - self.metar_info.observation_time
-            dimming_level = seconds_until_dusk / total_seconds
-
-        return (G * dimming_level, R * dimming_level, B * dimming_level)
 
 
     async def run(self):
