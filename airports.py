@@ -4,6 +4,7 @@ from asyncio import sleep
 from constants import BLACK, FLIGHT_CATEGORY_TO_COLOR, WHITE
 
 import astral
+from astral.sun import sun as AstralSun
 import datetime
 
 
@@ -22,6 +23,7 @@ class AirportLED:
             self.color = FLIGHT_CATEGORY_TO_COLOR.get(self.metar_info.flightCategory, WHITE)
             self.city = astral.LocationInfo(timezone='UTC', latitude=self.metar_info.latitude, longitude=self.metar_info.longitude)
 
+
     def __repr__(self):
         return f'AirportLED<{self.airport_code}>'
     
@@ -36,19 +38,21 @@ class AirportLED:
         G, R, B = color
         dimming_level = 1
 
+        sun = AstralSun(self.city.observer, tzinfo=self.city.tzinfo)
+
         # It's probably dark out
-        if now < self.city['dawn'] or now > self.city['dusk']:
+        if now < sun['dawn'] or now > sun['dusk']:
             print("before dawn or after dusk")
             dimming_level = 0.1
-        elif self.city['dawn'] < now < self.city['noon']:
+        elif sun['dawn'] < now < sun['noon']:
             print("between dawn and noon")
-            total_seconds = self.city['noon'] - self.city['dawn']
-            seconds_until_noon = self.city['noon'] - now
+            total_seconds = sun['noon'] - sun['dawn']
+            seconds_until_noon = sun['noon'] - now
             dimming_level = seconds_until_noon / total_seconds
-        elif self.city['noon'] < now < self.city['dusk']:
+        elif sun['noon'] < now < sun['dusk']:
             print("between noon and dusk")
-            total_seconds = self.city['dusk'] - self.city['noon']
-            seconds_until_dusk = self.city['dusk'] - now
+            total_seconds = sun['dusk'] - sun['noon']
+            seconds_until_dusk = sun['dusk'] - now
             dimming_level = seconds_until_dusk / total_seconds
 
         return (G * dimming_level, R * dimming_level, B * dimming_level)
