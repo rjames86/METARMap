@@ -69,8 +69,10 @@ class AirportLED:
             if self.metar_info is None:
                 print("no metar info found for %s. Returning..." % self.airport_code)
                 await sleep(0)
+                return
             if self.metar_info.flightCategory is None:
                 await sleep(0)
+                return
             
             print(
                 "Setting light "
