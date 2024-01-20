@@ -9,6 +9,9 @@ class AirportLED:
         self.pixel_index = pixel_index
         self.airport_code = airport_code
         self.metar_info = metar_info
+
+    def __repr__(self):
+        return f'AirportLED<{self.airport_code}>'
     
     async def run(self):
         while True:

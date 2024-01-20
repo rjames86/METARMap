@@ -113,7 +113,6 @@ def get_metar_data():
     AIRPORT_CODES = get_airport_codes()
     url = "https://aviationweather.gov/cgi-bin/data/dataserver.php?dataSource=metars&requestType=retrieve&format=xml&hoursBeforeNow=1.5&stationString="
     for airportcode in AIRPORT_CODES:
-        print(airportcode)
         url = url + airportcode + ","
 
     content = requests.get(url).text
