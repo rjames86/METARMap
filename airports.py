@@ -32,7 +32,7 @@ class AirportLED:
                     + str(color)
                 )
                 self.strip[self.pixel_index] = color
-                sleep(0)
+                await sleep(0)
         except Exception as e:
             print(e)
 
