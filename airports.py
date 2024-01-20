@@ -38,8 +38,11 @@ class AirportLED:
 
         print(self.airport_code, self.metar_info.observation_time)
 
-        sun = AstralSun(self.city.observer, tzinfo=self.city.tzinfo)
-        print(sun)
+        try:
+            sun = AstralSun(self.city.observer, tzinfo=self.city.tzinfo)
+            print(sun)
+        except Exception e:
+            print(self.airport_code, self.metar_info.observation_time)
 
         # It's probably dark out
         if self.metar_info.observation_time < sun['dawn'] or self.metar_info.observation_time > sun['dusk']:
