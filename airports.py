@@ -58,7 +58,7 @@ class AirportLED:
 
             return (G * dimming_level, R * dimming_level, B * dimming_level)
         except Exception as e:
-            print(self.airport_code, self.metar_info.observation_time)
+            print("Failed set brightness", self.airport_code, self.metar_info.observation_time)
             return WHITE
 
 
