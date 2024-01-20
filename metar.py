@@ -81,14 +81,14 @@ for index, airportcode in enumerate(AIRPORT_CODES):
     flightCategory = AIRPORT_TO_FLIGHT_CATEGORY.get(airportcode)
 
     if flightCategory is None:
-        print("Flight Category for %s is None" % airportcode)
-        continue
+        print("Flight Category for %s is None. Setting to white" % airportcode)
+        color = WHITE
+    else:
+        print(airportcode + " " + flightCategory)
 
-    print(airportcode + " " + flightCategory)
-
-    color = FLIGHT_CATEGORY_TO_COLOR.get(
-        flightCategory, WHITE
-    )  # retuns either a color or None
+        color = FLIGHT_CATEGORY_TO_COLOR.get(
+            flightCategory, WHITE
+        )  # retuns either a color or None
 
     print(
         "Setting light "
