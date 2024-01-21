@@ -105,7 +105,7 @@ class AirportLED:
 
         while True:
             for color in ALL_COLORS:
-                await self.fade_pixel(0.3, 1, current_color)
+                await self.fade_pixel(0.3, self.pixel_index, current_color)
                 current_color = color
 
     async def run(self):
