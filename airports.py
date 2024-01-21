@@ -69,15 +69,15 @@ class AirportLED:
             return (G * dimming_level, R * dimming_level, B * dimming_level)
         except Exception as e:
             logger.error(
-                "Failed set brightness",
+                "Failed set brightness: %s %s" % (
                 self.airport_code,
-                self.metar_info.observation_time,
+                self.metar_info.observation_time)
             )
             return color
 
     async def run(self):
         while True:
-            logger.info("running for ", self.airport_code)
+            logger.info("running for %s" % self.airport_code)
             if self.metar_info is None:
                 logger.info(
                     "no metar info found for %s. Returning..." % self.airport_code
