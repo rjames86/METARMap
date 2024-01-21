@@ -1,12 +1,10 @@
 import os
 from asyncio import sleep
-import time
 
 from constants import BLACK, FLIGHT_CATEGORY_TO_COLOR, WHITE, WIND_BLINK_THRESHOLD
 
 import astral
 from astral.sun import sun as AstralSun
-import datetime
 from logger import logger
 
 
@@ -79,7 +77,7 @@ class AirportLED:
             )
             return color
 
-    def fade_pixel(self, duration, index, new_color):
+    async def fade_pixel(self, duration, index, new_color):
         start_color = self.strip[index]
         # G R B
         red_diff = new_color[1] - start_color[1]
@@ -95,7 +93,7 @@ class AirportLED:
 
             self.strip[index] = (green_value, red_value, blue_value)
             # self.strip.show()
-            time.sleep(delay)
+            await sleep(delay)
 
     async def fade(self):
         logger.info("Fading %s. Index %s" % (self.airport_code, self.pixel_index))
@@ -104,11 +102,11 @@ class AirportLED:
         # ALL_COLORS = [(G * 0.5, R * 0.5, B * 0.5) , self.color]
         ALL_COLORS = [BLACK , self.color]
         while True:
-            await sleep(0)
             logger.info("while true %s" % self.airport_code)
             for color in ALL_COLORS:
-                self.fade_pixel(0.3, self.pixel_index, current_color)
+                await self.fade_pixel(0.3, self.pixel_index, current_color)
                 current_color = color
+                await sleep(0)
 
     async def run(self):
         logger.info("running for %s" % self.airport_code)
@@ -132,7 +130,7 @@ class AirportLED:
         )
 
         if self.metar_info.windSpeed >= WIND_BLINK_THRESHOLD:
-            await self.fade()
+            self.fade()
             await sleep(0)
         else:
             self.strip[self.pixel_index] = self.determine_brightness(self.color)
