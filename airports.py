@@ -130,7 +130,7 @@ class AirportLED:
         )
 
         if self.metar_info.windSpeed >= WIND_BLINK_THRESHOLD:
-            self.fade()
+            await self.fade()
             await sleep(0)
         else:
             self.strip[self.pixel_index] = self.determine_brightness(self.color)
