@@ -129,12 +129,12 @@ class AirportLED:
             + str(self.color)
         )
 
-        if self.metar_info.windSpeed >= WIND_BLINK_THRESHOLD:
-            await self.fade()
-            await sleep(0)
-        else:
-            self.strip[self.pixel_index] = self.determine_brightness(self.color)
-            await sleep(0)
+        # if self.metar_info.windSpeed >= WIND_BLINK_THRESHOLD:
+        #     await self.fade()
+        #     await sleep(0)
+        # else:
+        self.strip[self.pixel_index] = self.determine_brightness(self.color)
+        await sleep(0)
 
 
 def get_airport_codes():
