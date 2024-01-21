@@ -41,7 +41,7 @@ class AirportLED:
 
         G, R, B = color
 
-        MIN_BRIGHTNESS = 0.1
+        MIN_BRIGHTNESS = 0.05
         dimming_level = 1
 
         try:
@@ -134,6 +134,7 @@ class AirportLED:
         #     await sleep(0)
         # else:
         self.strip[self.pixel_index] = self.determine_brightness(self.color)
+        self.strip.show()
         await sleep(0)
 
 

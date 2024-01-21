@@ -31,5 +31,5 @@ FLIGHT_CATEGORY_TO_COLOR = {
 WIND_BLINK_THRESHOLD = 15
 
 strip = neopixel.NeoPixel(
-    LED_PIN, LED_COUNT, brightness=LED_BRIGHTNESS, auto_write=True
+    LED_PIN, LED_COUNT, brightness=LED_BRIGHTNESS, auto_write=False
 )
