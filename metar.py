@@ -12,6 +12,7 @@ async def run():
     results = asyncio.gather(*tasks)
     try:
         await results
+        strip.show()
     except Exception as e:
         print("Cancelling")
         results.cancel()

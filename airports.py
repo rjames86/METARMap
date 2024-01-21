@@ -134,7 +134,6 @@ class AirportLED:
         #     await sleep(0)
         # else:
         self.strip[self.pixel_index] = self.determine_brightness(self.color)
-        self.strip.show()
         await sleep(0)
 
 
