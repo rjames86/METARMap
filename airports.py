@@ -99,9 +99,11 @@ class AirportLED:
             await sleep(delay)
 
     async def fade(self):
+        logger.info("Fading %s" % self.airport_code)
         current_color = self.color
-        G, R, B = self.color
-        ALL_COLORS = [(G * 0.5, R * 0.5, B * 0.5) , self.color]
+        # G, R, B = self.color
+        # ALL_COLORS = [(G * 0.5, R * 0.5, B * 0.5) , self.color]
+        ALL_COLORS = [BLACK , self.color]
 
         while True:
             for color in ALL_COLORS:
