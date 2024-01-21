@@ -106,7 +106,7 @@ class AirportLED:
         ALL_COLORS = [BLACK , self.color]
         await sleep(0)
         while True:
-            logger.info("fading to %s" % (self.current_color))
+            logger.info("fading to %s" % (current_color))
             for color in ALL_COLORS:
                 await self.fade_pixel(0.3, self.pixel_index, current_color)
                 current_color = color
