@@ -79,7 +79,7 @@ class AirportLED:
             )
             return color
 
-    async def fade_pixel(self, duration, index, new_color):
+    def fade_pixel(self, duration, index, new_color):
         start_color = self.strip[index]
         # G R B
         red_diff = new_color[1] - start_color[1]
@@ -88,7 +88,6 @@ class AirportLED:
 
         delay = 0.005
         steps = int(duration // delay)
-        await sleep(0)
         for i in range(steps):
             red_value = start_color[1] + (red_diff * i // steps)
             green_value = start_color[0] + (green_diff * i // steps)
@@ -134,9 +133,10 @@ class AirportLED:
 
         if self.metar_info.windSpeed >= WIND_BLINK_THRESHOLD:
             await self.fade()
+            await sleep(0)
         else:
             self.strip[self.pixel_index] = self.determine_brightness(self.color)
-        await sleep(0)
+            await sleep(0)
 
 
 def get_airport_codes():
