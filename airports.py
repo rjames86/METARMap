@@ -96,7 +96,7 @@ class AirportLED:
 
             self.strip[index] = (green_value, red_value, blue_value)
             # self.strip.show()
-            await sleep(delay)
+            time.sleep(delay)
 
     async def fade(self):
         logger.info("Fading %s" % self.airport_code)
@@ -104,7 +104,7 @@ class AirportLED:
         # G, R, B = self.color
         # ALL_COLORS = [(G * 0.5, R * 0.5, B * 0.5) , self.color]
         ALL_COLORS = [BLACK , self.color]
-
+        await sleep(0)
         while True:
             for color in ALL_COLORS:
                 await self.fade_pixel(0.3, self.pixel_index, current_color)
