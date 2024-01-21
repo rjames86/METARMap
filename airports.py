@@ -1,7 +1,8 @@
 import os
 from asyncio import sleep
+import time
 
-from constants import BLACK, FLIGHT_CATEGORY_TO_COLOR, WHITE
+from constants import BLACK, FLIGHT_CATEGORY_TO_COLOR, WHITE, WIND_BLINK_THRESHOLD
 
 import astral
 from astral.sun import sun as AstralSun
@@ -73,18 +74,46 @@ class AirportLED:
             return (G * dimming_level, R * dimming_level, B * dimming_level)
         except Exception as e:
             logger.error(
-                "Failed set brightness: %s %s" % (
-                self.airport_code,
-                self.metar_info.observation_time)
+                "Failed set brightness: %s %s"
+                % (self.airport_code, self.metar_info.observation_time)
             )
             return color
+
+    async def fade_pixel(self, duration, index, new_color):
+        start_color = self.strip[index]
+        # G R B
+        red_diff = new_color[1] - start_color[1]
+        green_diff = new_color[0] - start_color[0]
+        blue_diff = new_color[2] - start_color[2]
+
+        delay = 0.005
+        steps = int(duration // delay)
+
+        for i in range(steps):
+            red_value = start_color[1] + (red_diff * i // steps)
+            green_value = start_color[0] + (green_diff * i // steps)
+            blue_value = start_color[2] + (blue_diff * i // steps)
+
+            self.strip[index] = (green_value, red_value, blue_value)
+            # self.strip.show()
+            await sleep(delay)
+
+    async def fade(self):
+        current_color = self.color
+        G, R, B = self.color
+        ALL_COLORS = [(G * 0.5, R * 0.5, B * 0.5) , self.color]
+
+        import sys
+        print("input", sys.argv[1])
+        while True:
+            for color in ALL_COLORS:
+                await self.fade_pixel(0.3, 1, current_color)
+                current_color = color
 
     async def run(self):
         logger.info("running for %s" % self.airport_code)
         if self.metar_info is None:
-            logger.info(
-                "no metar info found for %s. Returning..." % self.airport_code
-            )
+            logger.info("no metar info found for %s. Returning..." % self.airport_code)
             await sleep(0)
             return
         if self.metar_info.flightCategory is None:
@@ -101,7 +130,11 @@ class AirportLED:
             + " "
             + str(self.color)
         )
-        self.strip[self.pixel_index] = self.determine_brightness(self.color)
+
+        if self.metar_info.windSpeed >= WIND_BLINK_THRESHOLD:
+            await self.fade()
+        else:
+            self.strip[self.pixel_index] = self.determine_brightness(self.color)
         await sleep(0)
 
 

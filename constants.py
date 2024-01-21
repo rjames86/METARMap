@@ -4,7 +4,7 @@ import board
 
 # LED strip configuration:
 LED_COUNT = 249  # Number of LED pixels.
-LED_PIN = board.D18   # GPIO pin connected to the pixels (18 uses PWM!).
+LED_PIN = board.D18  # GPIO pin connected to the pixels (18 uses PWM!).
 # LED_PIN        = 10      # GPIO pin connected to the pixels (10 uses SPI /dev/spidev0.0).
 LED_FREQ_HZ = 800000  # LED signal frequency in hertz (usually 800khz)
 LED_DMA = 10  # DMA channel to use for generating signal (try 5)
@@ -28,9 +28,8 @@ FLIGHT_CATEGORY_TO_COLOR = {
     "LIFR": PURPLE,
 }
 
+WIND_BLINK_THRESHOLD = 15
+
 strip = neopixel.NeoPixel(
-    LED_PIN,
-    LED_COUNT,
-    brightness = LED_BRIGHTNESS,
-    auto_write=True
+    LED_PIN, LED_COUNT, brightness=LED_BRIGHTNESS, auto_write=True
 )
