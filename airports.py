@@ -103,8 +103,6 @@ class AirportLED:
         G, R, B = self.color
         ALL_COLORS = [(G * 0.5, R * 0.5, B * 0.5) , self.color]
 
-        import sys
-        print("input", sys.argv[1])
         while True:
             for color in ALL_COLORS:
                 await self.fade_pixel(0.3, 1, current_color)
