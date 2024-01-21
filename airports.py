@@ -88,7 +88,7 @@ class AirportLED:
 
         delay = 0.005
         steps = int(duration // delay)
-
+        sleep(0)
         for i in range(steps):
             red_value = start_color[1] + (red_diff * i // steps)
             green_value = start_color[0] + (green_diff * i // steps)
@@ -106,7 +106,7 @@ class AirportLED:
         ALL_COLORS = [BLACK , self.color]
         await sleep(0)
         while True:
-            logger.info("while true")
+            logger.info("while true %s" % self.airport_code)
             for color in ALL_COLORS:
                 await self.fade_pixel(0.3, self.pixel_index, current_color)
                 current_color = color
