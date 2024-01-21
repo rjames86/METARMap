@@ -55,17 +55,21 @@ class AirportLED:
                 self.metar_info.observation_time < dawn
                 or self.metar_info.observation_time > dusk
             ):
+                logger.info("Before dawn or after dusk")
                 dimming_level = MIN_BRIGHTNESS
             elif dawn < self.metar_info.observation_time < noon:
+                logger.info("After dawn and before noon")
                 total_seconds = noon - dawn
                 seconds_until_noon = noon - self.metar_info.observation_time
                 dimming_level = max(
                     1 - (seconds_until_noon / total_seconds), MIN_BRIGHTNESS
                 )
             elif noon < self.metar_info.observation_time < dusk:
+                logger.info("After noon and before dusk")
                 total_seconds = dusk - noon
                 seconds_until_dusk = dusk - self.metar_info.observation_time
                 dimming_level = max(seconds_until_dusk / total_seconds, MIN_BRIGHTNESS)
+            logger.info("Dimming level set to %s" % dimming_level)
             return (G * dimming_level, R * dimming_level, B * dimming_level)
         except Exception as e:
             logger.error(
@@ -76,30 +80,29 @@ class AirportLED:
             return color
 
     async def run(self):
-        while True:
-            logger.info("running for %s" % self.airport_code)
-            if self.metar_info is None:
-                logger.info(
-                    "no metar info found for %s. Returning..." % self.airport_code
-                )
-                await sleep(0)
-                return
-            if self.metar_info.flightCategory is None:
-                await sleep(0)
-                return
-
+        logger.info("running for %s" % self.airport_code)
+        if self.metar_info is None:
             logger.info(
-                "Setting light "
-                + str(self.pixel_index)
-                + " for "
-                + self.airport_code
-                + " "
-                + self.metar_info.flightCategory
-                + " "
-                + str(self.color)
+                "no metar info found for %s. Returning..." % self.airport_code
             )
-            self.strip[self.pixel_index] = self.determine_brightness(self.color)
             await sleep(0)
+            return
+        if self.metar_info.flightCategory is None:
+            await sleep(0)
+            return
+
+        logger.info(
+            "Setting light "
+            + str(self.pixel_index)
+            + " for "
+            + self.airport_code
+            + " "
+            + self.metar_info.flightCategory
+            + " "
+            + str(self.color)
+        )
+        self.strip[self.pixel_index] = self.determine_brightness(self.color)
+        await sleep(0)
 
 
 def get_airport_codes():
