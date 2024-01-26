@@ -114,7 +114,7 @@ class AirportLED:
             self.metar_info.flightCategory, WHITE
         )
 
-        new_color = self.determine_brightness(new_color)
+        # new_color = self.determine_brightness(new_color)
 
         if self.metar_info.windSpeed >= WIND_BLINK_THRESHOLD:
             if self.generator is None:
