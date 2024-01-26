@@ -99,7 +99,7 @@ class AirportLED:
         ALL_COLORS = [BLACK, color]
         while True:
             for color in ALL_COLORS:
-                for next_color in  self.fade_pixel(0.3, self.pixel_index, current_color):
+                for next_color in  self.fade_pixel(0.1, self.pixel_index, current_color):
                     yield next_color
                 current_color = color
 
@@ -114,7 +114,7 @@ class AirportLED:
             self.metar_info.flightCategory, WHITE
         )
 
-        # new_color = self.determine_brightness(new_color)
+        new_color = self.determine_brightness(new_color)
 
         if self.metar_info.windSpeed >= WIND_BLINK_THRESHOLD:
             if self.generator is None:
@@ -130,7 +130,7 @@ class AirportLED:
                 self.generator = None
                 return new_color
 
-        return BLACK
+        return new_color
 
         # self._color = new_color
 
