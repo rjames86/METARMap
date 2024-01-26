@@ -23,6 +23,9 @@ class AirportLED:
                 longitude=self.metar_info.longitude,
             )
         self._color = BLACK
+
+        self.generator = None
+
     def __repr__(self):
         return f"AirportLED<{self.airport_code}>"
 
@@ -114,10 +117,22 @@ class AirportLED:
         new_color = self.determine_brightness(new_color)
 
         if self.metar_info.windSpeed >= WIND_BLINK_THRESHOLD:
-            for next_color in self.fade(new_color):
-                return next_color
+            if self.generator is None:
+                self.generator = self.fade(new_color)
 
-        self._color = new_color
+
+        if self.generator:
+            try:
+                for next_color in self.generator:
+                    return next_color
+            except StopIteration:
+                logger.error("iterator completed. Returning %s" % str(new_color))
+                self.generator = None
+                return new_color
+
+
+
+        # self._color = new_color
 
         # logger.info(
         #     "Setting light "
@@ -130,7 +145,7 @@ class AirportLED:
         #     + str(self._color)
         # )
 
-        return self._color
+        # return self._color
 
 
     def set_pixel_color(self):
