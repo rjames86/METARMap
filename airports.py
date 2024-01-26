@@ -4,8 +4,6 @@ from constants import BLACK, FLIGHT_CATEGORY_TO_COLOR, WHITE, WIND_BLINK_THRESHO
 
 import astral
 from astral.sun import sun as AstralSun
-from logger import logger
-
 
 class AirportLED:
     def __init__(self, strip, pixel_index, airport_code, metar_info):
@@ -53,27 +51,19 @@ class AirportLED:
                 self.metar_info.observation_time < dawn
                 or self.metar_info.observation_time > dusk
             ):
-                # logger.info("Before dawn or after dusk")
                 dimming_level = MIN_BRIGHTNESS
             elif dawn < self.metar_info.observation_time < noon:
-                # logger.info("After dawn and before noon")
                 total_seconds = noon - dawn
                 seconds_until_noon = noon - self.metar_info.observation_time
                 dimming_level = max(
                     1 - (seconds_until_noon / total_seconds), MIN_BRIGHTNESS
                 )
             elif noon < self.metar_info.observation_time < dusk:
-                # logger.info("After noon and before dusk")
                 total_seconds = dusk - noon
                 seconds_until_dusk = dusk - self.metar_info.observation_time
                 dimming_level = max(seconds_until_dusk / total_seconds, MIN_BRIGHTNESS)
-            # logger.info("Dimming level set to %s" % dimming_level)
             return (G * dimming_level, R * dimming_level, B * dimming_level)
         except Exception as e:
-            logger.error(
-                "Failed set brightness: %s %s"
-                % (self.airport_code, self.metar_info.observation_time)
-            )
             return color
 
     def fade_pixel(self, duration, index, new_color):
@@ -89,14 +79,10 @@ class AirportLED:
             red_value = start_color[1] + (red_diff * i // steps)
             green_value = start_color[0] + (green_diff * i // steps)
             blue_value = start_color[2] + (blue_diff * i // steps)
-            logger.info("Fading index %s: %s from %s to %s" % (i, self.airport_code, str(new_color), str((green_value, red_value, blue_value))))
             yield (green_value, red_value, blue_value)
 
     def fade(self, color):
-        logger.info("Fading %s. Index %s" % (self.airport_code, self.pixel_index))
         current_color = color
-        # G, R, B = self.color
-        # ALL_COLORS = [(G * 0.5, R * 0.5, B * 0.5) , self.color]
         ALL_COLORS = [BLACK, color]
         while True:
             for color in ALL_COLORS:
@@ -106,7 +92,6 @@ class AirportLED:
 
     def get_color(self):
         if self.metar_info is None:
-            # logger.info("no metar info found for %s. Returning..." % self.airport_code)
             return self._color
         if self.metar_info.flightCategory is None:
             return self._color
@@ -129,27 +114,10 @@ class AirportLED:
                 for next_color in self.generator:
                     return next_color
             except StopIteration:
-                logger.error("iterator completed. Returning %s" % str(new_color))
                 self.generator = None
                 return new_color
 
         return new_color
-
-        # self._color = new_color
-
-        # logger.info(
-        #     "Setting light "
-        #     + str(self.pixel_index)
-        #     + " for "
-        #     + self.airport_code
-        #     + " "
-        #     + self.metar_info.flightCategory
-        #     + " "
-        #     + str(self._color)
-        # )
-
-        # return self._color
-
 
     def set_pixel_color(self):
         self.strip[self.pixel_index] = self.get_color()
