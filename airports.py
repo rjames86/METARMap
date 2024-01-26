@@ -96,9 +96,9 @@ class AirportLED:
         ALL_COLORS = [BLACK, color]
         while True:
             for color in ALL_COLORS:
-                next_color = self.fade_pixel(0.3, self.pixel_index, current_color)
+                for next_color in  self.fade_pixel(0.3, self.pixel_index, current_color):
+                    yield next_color
                 current_color = color
-                yield next_color
 
     def get_color(self):
         if self.metar_info is None:
