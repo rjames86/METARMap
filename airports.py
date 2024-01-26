@@ -83,7 +83,7 @@ class AirportLED:
         green_diff = new_color[0] - start_color[0]
         blue_diff = new_color[2] - start_color[2]
 
-        delay = 0.005
+        delay = 0.001
         steps = int(duration // delay)
         for i in range(steps):
             red_value = start_color[1] + (red_diff * i // steps)
