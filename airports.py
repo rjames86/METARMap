@@ -93,7 +93,7 @@ class AirportLED:
         current_color = color
         # G, R, B = self.color
         # ALL_COLORS = [(G * 0.5, R * 0.5, B * 0.5) , self.color]
-        ALL_COLORS = [BLACK , color]
+        ALL_COLORS = [color, BLACK]
         while True:
             logger.info("while true %s" % self.airport_code)
             for color in ALL_COLORS:
