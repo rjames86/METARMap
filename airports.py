@@ -22,6 +22,7 @@ class AirportLED:
                 latitude=self.metar_info.latitude,
                 longitude=self.metar_info.longitude,
             )
+            self.sun = AstralSun(self.city.observer, tzinfo=self.city.tzinfo)
         self._color = BLACK
 
         self.generator = None
@@ -43,10 +44,10 @@ class AirportLED:
         dimming_level = 1
 
         try:
-            sun = AstralSun(self.city.observer, tzinfo=self.city.tzinfo)
-            dawn = sun["dawn"]
-            noon = sun["noon"]
-            dusk = sun["dusk"]
+            
+            dawn = self.sun["dawn"]
+            noon = self.sun["noon"]
+            dusk = self.sun["dusk"]
 
             if (
                 self.metar_info.observation_time < dawn
@@ -114,7 +115,7 @@ class AirportLED:
             self.metar_info.flightCategory, WHITE
         )
 
-        # new_color = self.determine_brightness(new_color)
+        new_color = self.determine_brightness(new_color)
 
         if self.metar_info.windSpeed >= WIND_BLINK_THRESHOLD:
             if self.generator is None:
