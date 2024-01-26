@@ -49,21 +49,21 @@ class AirportLED:
                 self.metar_info.observation_time < dawn
                 or self.metar_info.observation_time > dusk
             ):
-                logger.info("Before dawn or after dusk")
+                # logger.info("Before dawn or after dusk")
                 dimming_level = MIN_BRIGHTNESS
             elif dawn < self.metar_info.observation_time < noon:
-                logger.info("After dawn and before noon")
+                # logger.info("After dawn and before noon")
                 total_seconds = noon - dawn
                 seconds_until_noon = noon - self.metar_info.observation_time
                 dimming_level = max(
                     1 - (seconds_until_noon / total_seconds), MIN_BRIGHTNESS
                 )
             elif noon < self.metar_info.observation_time < dusk:
-                logger.info("After noon and before dusk")
+                # logger.info("After noon and before dusk")
                 total_seconds = dusk - noon
                 seconds_until_dusk = dusk - self.metar_info.observation_time
                 dimming_level = max(seconds_until_dusk / total_seconds, MIN_BRIGHTNESS)
-            logger.info("Dimming level set to %s" % dimming_level)
+            # logger.info("Dimming level set to %s" % dimming_level)
             return (G * dimming_level, R * dimming_level, B * dimming_level)
         except Exception as e:
             logger.error(
@@ -93,18 +93,17 @@ class AirportLED:
         current_color = color
         # G, R, B = self.color
         # ALL_COLORS = [(G * 0.5, R * 0.5, B * 0.5) , self.color]
-        ALL_COLORS = [color, BLACK]
+        ALL_COLORS = [BLACK, color]
         while True:
-            logger.info("while true %s" % self.airport_code)
             for color in ALL_COLORS:
+                next_color = self.fade_pixel(0.3, self.pixel_index, current_color)
                 current_color = color
-                return self.fade_pixel(0.3, self.pixel_index, current_color)
+                return next_color
 
     @property
     def color(self):
-        logger.info("running for %s" % self.airport_code)
         if self.metar_info is None:
-            logger.info("no metar info found for %s. Returning..." % self.airport_code)
+            # logger.info("no metar info found for %s. Returning..." % self.airport_code)
             return self._color
         if self.metar_info.flightCategory is None:
             return self._color
