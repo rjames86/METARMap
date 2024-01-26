@@ -116,7 +116,7 @@ class AirportLED:
         new_color = self.determine_brightness(new_color)
 
         if self.metar_info.windSpeed >= WIND_BLINK_THRESHOLD:
-            new_color = self.fade(new_color)
+            new_color = next(self.fade(new_color))
 
         self._color = new_color
 
