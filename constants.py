@@ -28,7 +28,7 @@ FLIGHT_CATEGORY_TO_COLOR = {
     "LIFR": PURPLE,
 }
 
-WIND_BLINK_THRESHOLD = 15
+WIND_BLINK_THRESHOLD = 10
 
 strip = neopixel.NeoPixel(
     LED_PIN, LED_COUNT, brightness=LED_BRIGHTNESS, auto_write=False
