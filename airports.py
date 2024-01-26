@@ -1,6 +1,5 @@
 import os
-from asyncio import sleep
-
+import time
 from constants import BLACK, FLIGHT_CATEGORY_TO_COLOR, WHITE, WIND_BLINK_THRESHOLD
 
 import astral
@@ -16,18 +15,14 @@ class AirportLED:
         self.metar_info = metar_info
 
         if self.metar_info is None:
-            self.color = WHITE
             self.city = None
         else:
-            self.color = FLIGHT_CATEGORY_TO_COLOR.get(
-                self.metar_info.flightCategory, WHITE
-            )
             self.city = astral.LocationInfo(
                 timezone="UTC",
                 latitude=self.metar_info.latitude,
                 longitude=self.metar_info.longitude,
             )
-
+        self._color = BLACK
     def __repr__(self):
         return f"AirportLED<{self.airport_code}>"
 
@@ -77,7 +72,7 @@ class AirportLED:
             )
             return color
 
-    async def fade_pixel(self, duration, index, new_color):
+    def fade_pixel(self, duration, index, new_color):
         start_color = self.strip[index]
         # G R B
         red_diff = new_color[1] - start_color[1]
@@ -91,32 +86,39 @@ class AirportLED:
             green_value = start_color[0] + (green_diff * i // steps)
             blue_value = start_color[2] + (blue_diff * i // steps)
 
-            self.strip[index] = (green_value, red_value, blue_value)
-            # self.strip.show()
-            await sleep(delay)
+            yield (green_value, red_value, blue_value)
 
-    async def fade(self):
+    def fade(self, color):
         logger.info("Fading %s. Index %s" % (self.airport_code, self.pixel_index))
-        current_color = self.color
+        current_color = color
         # G, R, B = self.color
         # ALL_COLORS = [(G * 0.5, R * 0.5, B * 0.5) , self.color]
-        ALL_COLORS = [BLACK , self.color]
+        ALL_COLORS = [BLACK , color]
         while True:
             logger.info("while true %s" % self.airport_code)
             for color in ALL_COLORS:
-                await self.fade_pixel(0.3, self.pixel_index, current_color)
+                yield self.fade_pixel(0.3, self.pixel_index, current_color)
                 current_color = color
-                await sleep(0)
 
-    async def run(self):
+    @property
+    def color(self):
         logger.info("running for %s" % self.airport_code)
         if self.metar_info is None:
             logger.info("no metar info found for %s. Returning..." % self.airport_code)
-            await sleep(0)
-            return
+            return self._color
         if self.metar_info.flightCategory is None:
-            await sleep(0)
-            return
+            return self._color
+
+        new_color = FLIGHT_CATEGORY_TO_COLOR.get(
+            self.metar_info.flightCategory, WHITE
+        )
+
+        new_color = self.determine_brightness(new_color)
+
+        if self.metar_info.windSpeed >= WIND_BLINK_THRESHOLD:
+            new_color = self.fade(new_color)
+
+        self._color = new_color
 
         logger.info(
             "Setting light "
@@ -126,16 +128,15 @@ class AirportLED:
             + " "
             + self.metar_info.flightCategory
             + " "
-            + str(self.color)
+            + str(self._color)
         )
 
-        # if self.metar_info.windSpeed >= WIND_BLINK_THRESHOLD:
-        #     await self.fade()
-        #     await sleep(0)
-        # else:
-        self.strip[self.pixel_index] = self.determine_brightness(self.color)
-        await sleep(0)
+        return self._color
 
+
+    def set_pixel_color(self):
+        self.strip[self.pixel_index] = self.color
+        
 
 def get_airport_codes():
     dir_path = os.path.dirname(os.path.realpath(__file__))
