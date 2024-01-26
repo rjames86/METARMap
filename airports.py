@@ -120,6 +120,8 @@ class AirportLED:
         if self.metar_info.windSpeed >= WIND_BLINK_THRESHOLD:
             if self.generator is None:
                 self.generator = self.fade(new_color)
+        else:
+            self.generator = None
 
 
         if self.generator:
