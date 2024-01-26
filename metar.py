@@ -9,6 +9,7 @@ def run():
     airport_leds = [AirportLED(strip, index, airport_code, metar_infos.get(airport_code)) for index, airport_code in enumerate(AIRPORT_CODES)]
 
     while True:
+        print("\n\nNEW LOOP\n\n")
         for airport_led in airport_leds:
             airport_led.set_pixel_color()
         strip.show()
