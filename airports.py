@@ -85,7 +85,7 @@ class AirportLED:
             red_value = start_color[1] + (red_diff * i // steps)
             green_value = start_color[0] + (green_diff * i // steps)
             blue_value = start_color[2] + (blue_diff * i // steps)
-            logger.info("Fading %s from %s to %s" % (self.airport_code, str(new_color), str((green_value, red_value, blue_value))))
+            logger.info("Fading index %s: %s from %s to %s" % (i, self.airport_code, str(new_color), str((green_value, red_value, blue_value))))
             yield (green_value, red_value, blue_value)
 
     def fade(self, color):
@@ -119,16 +119,16 @@ class AirportLED:
 
         self._color = new_color
 
-        logger.info(
-            "Setting light "
-            + str(self.pixel_index)
-            + " for "
-            + self.airport_code
-            + " "
-            + self.metar_info.flightCategory
-            + " "
-            + str(self._color)
-        )
+        # logger.info(
+        #     "Setting light "
+        #     + str(self.pixel_index)
+        #     + " for "
+        #     + self.airport_code
+        #     + " "
+        #     + self.metar_info.flightCategory
+        #     + " "
+        #     + str(self._color)
+        # )
 
         return self._color
 
