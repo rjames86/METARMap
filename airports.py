@@ -98,10 +98,9 @@ class AirportLED:
             for color in ALL_COLORS:
                 next_color = self.fade_pixel(0.3, self.pixel_index, current_color)
                 current_color = color
-                return next_color
+                yield next_color
 
-    @property
-    def color(self):
+    def get_color(self):
         if self.metar_info is None:
             # logger.info("no metar info found for %s. Returning..." % self.airport_code)
             return self._color
@@ -135,7 +134,7 @@ class AirportLED:
 
 
     def set_pixel_color(self):
-        self.strip[self.pixel_index] = self.color
+        self.strip[self.pixel_index] = self.get_color()
         
 
 def get_airport_codes():
