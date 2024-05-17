@@ -38,7 +38,7 @@ class AirportLED:
 
         G, R, B = color
 
-        MIN_BRIGHTNESS = 0.05
+        MIN_BRIGHTNESS = 0.01
         dimming_level = 1
 
         try:
