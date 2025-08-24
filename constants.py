@@ -24,6 +24,9 @@ FLIGHT_CATEGORY_TO_COLOR = {
 
 WIND_BLINK_THRESHOLD = 10
 
+# Animation timing
+ANIMATION_FRAME_DELAY = 0.03  # 33 FPS for smooth fades
+
 strip = neopixel.NeoPixel(
     LED_PIN, LED_COUNT, brightness=LED_BRIGHTNESS, auto_write=False
 )

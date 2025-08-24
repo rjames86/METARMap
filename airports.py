@@ -1,7 +1,7 @@
 import os
 import time
 import threading
-from constants import BLACK, FLIGHT_CATEGORY_TO_COLOR, WHITE, WIND_BLINK_THRESHOLD
+from constants import BLACK, FLIGHT_CATEGORY_TO_COLOR, WHITE, WIND_BLINK_THRESHOLD, ANIMATION_FRAME_DELAY
 
 import astral
 from astral.sun import sun as AstralSun
@@ -28,8 +28,8 @@ class AirportLED:
         self.thread = None
         self.running = False
         self.lock = threading.Lock()
-        self.fade_speed = 0.1  # Default fade duration
-        self.blink_speed = 1.0  # Default blink cycle time
+        self.fade_speed = 1.0  # Default fade duration (longer = smoother)
+        self.blink_speed = 0.5  # Default blink cycle time
 
     def __repr__(self):
         return f"AirportLED<{self.airport_code}>"
@@ -78,7 +78,7 @@ class AirportLED:
         green_diff = end_color[0] - start_color[0]
         blue_diff = end_color[2] - start_color[2]
 
-        delay = 0.05  # Match animation loop rate
+        delay = ANIMATION_FRAME_DELAY
         steps = max(1, int(duration // delay))
         for i in range(steps):
             progress = i / steps
@@ -92,14 +92,14 @@ class AirportLED:
             # Fade from target to black
             for next_color in self.fade_pixel(self.fade_speed, target_color, BLACK):
                 yield next_color
-            # Hold at black briefly
-            for _ in range(int(self.blink_speed * 5)):  # Hold time based on blink speed
+            # Hold at black very briefly (optional)
+            for _ in range(int(self.blink_speed * 2)):  # Reduced hold time
                 yield BLACK
             # Fade from black to target
             for next_color in self.fade_pixel(self.fade_speed, BLACK, target_color):
                 yield next_color
-            # Hold at target briefly  
-            for _ in range(int(self.blink_speed * 5)):
+            # Hold at target very briefly (optional) 
+            for _ in range(int(self.blink_speed * 2)):  # Reduced hold time
                 yield target_color
 
     def get_color(self):
@@ -156,7 +156,7 @@ class AirportLED:
                     with self.lock:
                         self.generator = None
                         self.strip[self.pixel_index] = self.get_static_color()
-            time.sleep(0.05)  # 20 FPS animation rate
+            time.sleep(ANIMATION_FRAME_DELAY)
     
     def start_animation(self):
         if not self.running:
