@@ -1,0 +1,24 @@
+[Unit]
+Description=METAR Map LED Display
+After=network.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/Users/rjames/dev/METARMap
+ExecStart=/usr/bin/python3 /Users/rjames/dev/METARMap/metar.py
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+# Environment variables
+Environment=PYTHONUNBUFFERED=1
+
+# Security settings
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
