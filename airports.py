@@ -111,11 +111,10 @@ class AirportLED:
 
         if self.generator:
             try:
-                for next_color in self.generator:
-                    return next_color
+                return next(self.generator)
             except StopIteration:
-                self.generator = None
-                return new_color
+                self.generator = self.fade(new_color)
+                return next(self.generator)
 
         return new_color
 
