@@ -62,8 +62,12 @@ class AirportLED:
                 total_seconds = dusk - noon
                 seconds_until_dusk = dusk - self.metar_info.observation_time
                 dimming_level = max(seconds_until_dusk / total_seconds, MIN_BRIGHTNESS)
-            return (G * dimming_level, R * dimming_level, B * dimming_level)
+            final_color = (G * dimming_level, R * dimming_level, B * dimming_level)
+            if self.airport_code in ['KIAH', 'KDFW']:  # Debug first couple airports
+                print(f"{self.airport_code}: dimming={dimming_level:.3f}, color={final_color}")
+            return final_color
         except Exception as e:
+            print(f"Brightness calculation error for {self.airport_code}: {e}")
             return color
 
     def fade_pixel(self, duration, index, new_color):
