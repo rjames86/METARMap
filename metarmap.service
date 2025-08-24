@@ -6,7 +6,7 @@ Wants=network-online.target
 [Service]
 Type=simple
 User=root
-WorkingDirectory=/METARmaps
+WorkingDirectory=/METARmaps/led
 ExecStart=/usr/bin/python3 /METARmaps/led/metar.py
 Restart=always
 RestartSec=10
