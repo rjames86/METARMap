@@ -17,27 +17,20 @@ def run():
         while True:
             if time.time() - now >= 60 * 5: # 5 minute
                 logger.info("Updating weather data...")
-                # Stop all animations before updating
-                for led in airport_leds:
-                    led.stop_animation()
-                
                 metar_infos = get_metar_data()
                 logger.info(f"Updated weather data for {len(metar_infos)} airports")
                 airport_leds = [AirportLED(strip, index, airport_code, metar_infos.get(airport_code)) for index, airport_code in enumerate(AIRPORT_CODES)]
                 now = time.time()
 
-            # Update static LEDs and start/stop animations as needed
+            # Update all LEDs (static and fading)
             for airport_led in airport_leds:
                 airport_led.set_pixel_color()
             strip.show()
             
-            time.sleep(0.1)  # Reduce CPU usage since animations run in threads
+            time.sleep(0.05)  # ~20 FPS for smooth fades
             
     except KeyboardInterrupt:
         logger.info("Shutting down...")
-        # Stop all animations
-        for led in airport_leds:
-            led.stop_animation()
         # Turn off all LEDs
         strip.fill((0, 0, 0))
         strip.show()

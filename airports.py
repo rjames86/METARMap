@@ -1,7 +1,6 @@
 import os
 import time
-import threading
-from constants import BLACK, FLIGHT_CATEGORY_TO_COLOR, WHITE, WIND_BLINK_THRESHOLD, ANIMATION_FRAME_DELAY
+from constants import BLACK, FLIGHT_CATEGORY_TO_COLOR, WHITE, WIND_BLINK_THRESHOLD
 
 import astral
 from astral.sun import sun as AstralSun
@@ -24,12 +23,11 @@ class AirportLED:
             self.sun = AstralSun(self.city.observer, tzinfo=self.city.tzinfo)
         self._color = BLACK
 
-        self.generator = None
-        self.thread = None
-        self.running = False
-        self.lock = threading.Lock()
-        self.fade_speed = 2.0  # Default fade duration (longer = smoother)
-        self.blink_speed = 0.5  # Default blink cycle time
+        # Fade state tracking
+        self.should_fade = False
+        self.fade_start_time = 0
+        self.fade_duration = 2.0  # seconds for each fade direction
+        self.fade_direction = 1  # 1 = fading to black, -1 = fading to color
 
     def __repr__(self):
         return f"AirportLED<{self.airport_code}>"
@@ -72,29 +70,36 @@ class AirportLED:
         except Exception as e:
             return color
 
-    def fade_pixel(self, duration, start_color, end_color):
-        # G R B
-        red_diff = end_color[1] - start_color[1]
-        green_diff = end_color[0] - start_color[0]
-        blue_diff = end_color[2] - start_color[2]
-
-        delay = ANIMATION_FRAME_DELAY
-        steps = max(1, int(duration / delay))  # Use / instead of // for more steps
-        for i in range(steps + 1):  # Include the final step
-            progress = i / steps if steps > 0 else 1.0
-            red_value = int(start_color[1] + (red_diff * progress))
-            green_value = int(start_color[0] + (green_diff * progress))
-            blue_value = int(start_color[2] + (blue_diff * progress))
-            yield (green_value, red_value, blue_value)
-
-    def fade(self, target_color):
-        while True:
-            # Fade from target to black
-            for next_color in self.fade_pixel(self.fade_speed, target_color, BLACK):
-                yield next_color
-            # Fade from black to target immediately (no hold)
-            for next_color in self.fade_pixel(self.fade_speed, BLACK, target_color):
-                yield next_color
+    def calculate_fade_color(self, base_color, current_time):
+        if not self.should_fade:
+            return base_color
+            
+        elapsed = current_time - self.fade_start_time
+        
+        # Check if we need to switch direction
+        if elapsed >= self.fade_duration:
+            self.fade_direction *= -1  # Flip direction
+            self.fade_start_time = current_time
+            elapsed = 0
+        
+        # Calculate fade progress (0 to 1)
+        progress = elapsed / self.fade_duration
+        
+        if self.fade_direction == 1:
+            # Fading from base_color to black
+            start_color = base_color
+            end_color = BLACK
+        else:
+            # Fading from black to base_color
+            start_color = BLACK
+            end_color = base_color
+        
+        # Interpolate between colors
+        red_value = int(start_color[1] + (end_color[1] - start_color[1]) * progress)
+        green_value = int(start_color[0] + (end_color[0] - start_color[0]) * progress)
+        blue_value = int(start_color[2] + (end_color[2] - start_color[2]) * progress)
+        
+        return (green_value, red_value, blue_value)
 
     def get_color(self):
         if self.metar_info is None:
@@ -102,31 +107,23 @@ class AirportLED:
         if self.metar_info.flightCategory is None:
             return self._color
 
-        new_color = FLIGHT_CATEGORY_TO_COLOR.get(
+        base_color = FLIGHT_CATEGORY_TO_COLOR.get(
             self.metar_info.flightCategory, WHITE
         )
+        base_color = self.determine_brightness(base_color)
 
-        new_color = self.determine_brightness(new_color)
-
-        should_animate = self.metar_info.windGustSpeed >= WIND_BLINK_THRESHOLD
+        should_fade = self.metar_info.windGustSpeed >= WIND_BLINK_THRESHOLD
         
-        if should_animate and not self.running:
-            self.generator = self.fade(new_color)
-            self.start_animation()
-        elif not should_animate and self.running:
-            self.stop_animation()
-        elif should_animate and self.generator is None:
-            self.generator = self.fade(new_color)
-
-
-        if self.generator:
-            try:
-                return next(self.generator)
-            except StopIteration:
-                self.generator = self.fade(new_color)
-                return next(self.generator)
-
-        return new_color
+        # Start or stop fading based on wind conditions
+        if should_fade and not self.should_fade:
+            self.should_fade = True
+            self.fade_start_time = time.time()
+            self.fade_direction = 1
+        elif not should_fade:
+            self.should_fade = False
+        
+        # Calculate the current color (static or fading)
+        return self.calculate_fade_color(base_color, time.time())
     
     def get_static_color(self):
         if self.metar_info is None:
@@ -139,35 +136,8 @@ class AirportLED:
         )
         return self.determine_brightness(new_color)
 
-    def _animation_loop(self):
-        while self.running:
-            if self.generator:
-                try:
-                    color = next(self.generator)
-                    with self.lock:
-                        self.strip[self.pixel_index] = color
-                except StopIteration:
-                    with self.lock:
-                        self.generator = None
-                        self.strip[self.pixel_index] = self.get_static_color()
-            time.sleep(ANIMATION_FRAME_DELAY)
-    
-    def start_animation(self):
-        if not self.running:
-            self.running = True
-            self.thread = threading.Thread(target=self._animation_loop, daemon=True)
-            self.thread.start()
-    
-    def stop_animation(self):
-        self.running = False
-        if self.thread and self.thread.is_alive():
-            self.thread.join(timeout=1.0)
-        self.thread = None
-
     def set_pixel_color(self):
-        if not self.running:
-            with self.lock:
-                self.strip[self.pixel_index] = self.get_color()
+        self.strip[self.pixel_index] = self.get_color()
         
 
 def get_airport_codes():
