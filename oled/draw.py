@@ -13,7 +13,7 @@ from config import (
     DISPLAY_VALUES,
 )
 
-SCROLL_DELAY = 0.015  # Faster scrolling
+SCROLL_DELAY = 0.001  # Much faster scrolling
 
 
 class OLEDDraw:
