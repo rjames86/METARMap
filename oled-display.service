@@ -15,6 +15,7 @@ StandardError=journal
 
 # Environment variables
 Environment=PYTHONUNBUFFERED=1
+Environment=PYTHONPATH=/METARmaps/oled:/METARmaps
 
 # Security settings
 NoNewPrivileges=true
