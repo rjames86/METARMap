@@ -28,7 +28,7 @@ class AirportLED:
         self.thread = None
         self.running = False
         self.lock = threading.Lock()
-        self.fade_speed = 1.0  # Default fade duration (longer = smoother)
+        self.fade_speed = 2.0  # Default fade duration (longer = smoother)
         self.blink_speed = 0.5  # Default blink cycle time
 
     def __repr__(self):
@@ -79,9 +79,9 @@ class AirportLED:
         blue_diff = end_color[2] - start_color[2]
 
         delay = ANIMATION_FRAME_DELAY
-        steps = max(1, int(duration // delay))
-        for i in range(steps):
-            progress = i / steps
+        steps = max(1, int(duration / delay))  # Use / instead of // for more steps
+        for i in range(steps + 1):  # Include the final step
+            progress = i / steps if steps > 0 else 1.0
             red_value = int(start_color[1] + (red_diff * progress))
             green_value = int(start_color[0] + (green_diff * progress))
             blue_value = int(start_color[2] + (blue_diff * progress))
@@ -92,15 +92,9 @@ class AirportLED:
             # Fade from target to black
             for next_color in self.fade_pixel(self.fade_speed, target_color, BLACK):
                 yield next_color
-            # Hold at black very briefly (optional)
-            for _ in range(int(self.blink_speed * 2)):  # Reduced hold time
-                yield BLACK
-            # Fade from black to target
+            # Fade from black to target immediately (no hold)
             for next_color in self.fade_pixel(self.fade_speed, BLACK, target_color):
                 yield next_color
-            # Hold at target very briefly (optional) 
-            for _ in range(int(self.blink_speed * 2)):  # Reduced hold time
-                yield target_color
 
     def get_color(self):
         if self.metar_info is None:
