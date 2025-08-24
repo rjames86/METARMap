@@ -1,8 +1,14 @@
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from airports import AirportLED, AIRPORT_CODES
 from constants import strip
 from metar_data import get_metar_data
-from logger import logger
+from shared_logger import setup_logger
 import time
+
+logger = setup_logger('metarmap-led')
 
 def run():
     logger.info("METARMap starting up...")
