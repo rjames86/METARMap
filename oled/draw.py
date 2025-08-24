@@ -81,9 +81,9 @@ class OLEDDraw:
             self.draw_header(0, header)
             self.draw_body((x - i, self.top + 12), display_text)
             if i == 0:
-                self.show(1)
+                self.show(1) 
             else:
-                self.show(SCROLL_DELAY)
+                self.show(0)
         self.wait(1)
 
     def clear_screen(self):
