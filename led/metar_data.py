@@ -1,9 +1,12 @@
 from collections import defaultdict
-import xml.etree.ElementTree as ET
 import datetime
 import requests
+import logging
 
 from airports import AIRPORT_CODES
+
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 class MetarInfo:
     def __init__(
@@ -48,64 +51,106 @@ class MetarInfo:
 
 class MetarInfos(defaultdict):
     @classmethod
-    def from_xml(cls, xml_data):
+    def _calculate_flight_category(cls, metar):
+        """Calculate flight category based on visibility and ceiling."""
+        station_id = metar.get("icaoId", "UNKNOWN")
+        
+        vis = 10  # Default to 10+ miles
+        if metar.get("visib"):
+            vis_str = str(metar.get("visib")).replace("+", "")
+            try:
+                vis = float(vis_str)
+            except (ValueError, TypeError):
+                logger.warning(f"{station_id}: Invalid visibility value '{metar.get('visib')}', using default 10mi")
+                vis = 10
+        
+        # Find lowest ceiling
+        ceiling = None
+        if metar.get("clouds"):
+            for cloud in metar.get("clouds", []):
+                cover = cloud.get("cover", "").upper()
+                if cover in ["BKN", "OVC"]:  # Broken or Overcast
+                    base = cloud.get("base", 0)
+                    if ceiling is None or base < ceiling:
+                        ceiling = base
+        
+        # Determine flight category
+        if ceiling is not None and ceiling < 500:
+            category = "LIFR"  # Low IFR
+        elif vis < 1 or (ceiling is not None and ceiling < 500):
+            category = "LIFR"
+        elif vis < 3 or (ceiling is not None and ceiling < 1000):
+            category = "IFR"
+        elif vis <= 5 or (ceiling is not None and ceiling <= 3000):
+            category = "MVFR"  # Marginal VFR
+        else:
+            category = "VFR"
+        
+        ceiling_str = f"{ceiling}ft" if ceiling is not None else "unlimited"
+        logger.debug(f"{station_id}: vis={vis}mi, ceiling={ceiling_str} -> {category}")
+        
+        return category
+    
+    @classmethod
+    def from_json(cls, json_data):
         cls = MetarInfos()
+        
+        logger.info(f"Processing {len(json_data)} METAR records from JSON data")
+        processed_count = 0
+        skipped_count = 0
 
-        root = ET.fromstring(xml_data)
-        for metar in root.iter("METAR"):
-            stationId = metar.find("station_id").text
-            if metar.find("flight_category") is None:
-                print("Missing flight condition, skipping.")
+        for metar in json_data:
+            stationId = metar.get("icaoId")
+            if not stationId:
+                logger.warning("METAR record missing icaoId, skipping")
+                skipped_count += 1
                 continue
-            flightCategory = metar.find("flight_category").text
-            windDir = ""
-            windSpeed = 0
-            windGustSpeed = 0
+            
+            # Calculate flight category from visibility and cloud data
+            flightCategory = cls._calculate_flight_category(metar)
+            if not flightCategory:
+                logger.warning(f"{stationId}: Unable to determine flight category, skipping")
+                skipped_count += 1
+                continue
+                
+            windDir = str(metar.get("wdir", "")) if metar.get("wdir") is not None else ""
+            windSpeed = metar.get("wspd", 0) or 0
+            windGustSpeed = metar.get("wgst", 0) or 0
             windGust = False
             lightning = False
-            tempC = 0
-            dewpointC = 0
+            tempC = int(round(metar.get("temp", 0))) if metar.get("temp") is not None else 0
+            dewpointC = int(round(metar.get("dewp", 0))) if metar.get("dewp") is not None else 0
             vis = 0
-            altimHg = 0.0
-            obs = ""
-            latitude = 0
-            longitude = 0
+            altimHg = (metar.get("altim", 0.0) / 33.8639) if metar.get("altim") else 0.0  # Convert from hPa to inHg
+            obs = metar.get("wxString", "") or ""
+            latitude = metar.get("lat", 0)
+            longitude = metar.get("lon", 0)
             skyConditions = []
             obsTime = None
 
-            if metar.find('latitude') is not None:
-                latitude = float(metar.find('latitude').text)
-            if metar.find('longitude') is not None:
-                longitude = float(metar.find('longitude').text)
-            if metar.find("wind_gust_kt") is not None:
-                windGustSpeed = int(metar.find("wind_gust_kt").text)
-                # windGust = (True if (ALWAYS_BLINK_FOR_GUSTS or windGustSpeed > WIND_BLINK_THRESHOLD) else False)
-            if metar.find("wind_speed_kt") is not None:
-                windSpeed = int(metar.find("wind_speed_kt").text)
-            if metar.find("wind_dir_degrees") is not None:
-                windDir = metar.find("wind_dir_degrees").text
-            if metar.find("temp_c") is not None:
-                tempC = int(round(float(metar.find("temp_c").text)))
-            if metar.find("dewpoint_c") is not None:
-                dewpointC = int(round(float(metar.find("dewpoint_c").text)))
-            if metar.find("visibility_statute_mi") is not None:
-                vis_str = metar.find("visibility_statute_mi").text
-                vis_str = vis_str.replace("+", "")
-                vis = int(round(float(vis_str)))
-            if metar.find("altim_in_hg") is not None:
-                altimHg = float(round(float(metar.find("altim_in_hg").text), 2))
-            if metar.find("wx_string") is not None:
-                obs = metar.find("wx_string").text
-            if metar.find("observation_time") is not None:
-                obsTime = datetime.datetime.fromisoformat(
-                    metar.find("observation_time").text.replace("Z", "+00:00")
-                ).replace(tzinfo=datetime.timezone.utc)
-            for skyIter in metar.iter("sky_condition"):
-                skyCond = {
-                    "cover": skyIter.get("sky_cover"),
-                    "cloudBaseFt": int(skyIter.get("cloud_base_ft_agl", default=0)),
-                }
-                skyConditions.append(skyCond)
+            if metar.get("visib"):
+                vis_str = str(metar.get("visib")).replace("+", "")
+                try:
+                    vis = int(round(float(vis_str)))
+                except (ValueError, TypeError):
+                    vis = 0
+
+            if metar.get("reportTime"):
+                try:
+                    obsTime = datetime.datetime.fromisoformat(
+                        metar.get("reportTime").replace("Z", "+00:00")
+                    ).replace(tzinfo=datetime.timezone.utc)
+                except (ValueError, AttributeError):
+                    obsTime = None
+
+            if metar.get("clouds"):
+                for cloud in metar.get("clouds", []):
+                    skyCond = {
+                        "cover": cloud.get("cover"),
+                        "cloudBaseFt": cloud.get("base", 0),
+                    }
+                    skyConditions.append(skyCond)
+
             cls[stationId] = MetarInfo(
                 stationId,
                 flightCategory,
@@ -124,11 +169,38 @@ class MetarInfos(defaultdict):
                 longitude,
                 obsTime
             )
+            processed_count += 1
+            logger.debug(f"{stationId}: Successfully processed - {flightCategory}, {tempC}°C, {windSpeed}kt")
+        
+        logger.info(f"JSON parsing complete: {processed_count} processed, {skipped_count} skipped")
         return cls
     
 def get_metar_data():
-    url = "https://aviationweather.gov/cgi-bin/data/dataserver.php?dataSource=metars&requestType=retrieve&format=xml&hoursBeforeNow=1.5&stationString="
-    for airportcode in AIRPORT_CODES:
-        url = url + airportcode + ","
-    content = requests.get(url).text
-    return MetarInfos.from_xml(content)
+    stations = ",".join(AIRPORT_CODES)
+    url = f"https://aviationweather.gov/api/data/metar?ids={stations}&format=json&hours=1.5"
+    
+    logger.info(f"Fetching METAR data for {len(AIRPORT_CODES)} airports: {stations}")
+    logger.debug(f"API URL: {url}")
+    
+    try:
+        response = requests.get(url, timeout=30)
+        response.raise_for_status()
+        logger.info(f"Successfully fetched METAR data - HTTP {response.status_code}")
+        
+        json_data = response.json()
+        logger.info(f"Received {len(json_data)} METAR records from API")
+        
+        metar_infos = MetarInfos.from_json(json_data)
+        logger.info(f"Successfully parsed {len(metar_infos)} METAR records")
+        
+        return metar_infos
+        
+    except requests.RequestException as e:
+        logger.error(f"Failed to fetch METAR data: {e}")
+        raise
+    except ValueError as e:
+        logger.error(f"Failed to parse JSON response: {e}")
+        raise
+    except Exception as e:
+        logger.error(f"Unexpected error in get_metar_data: {e}")
+        raise
