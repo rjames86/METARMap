@@ -131,7 +131,7 @@ class GeographicMapper:
 
 def spiral_animation(strip, mapper: GeographicMapper, color=WHITE, wait_ms=30, fade_duration=500):
     """
-    Animate LEDs in a spiral pattern from center of US outward.
+    Animate LEDs in a spiral pattern from center of US outward with rainbow colors.
     """
     print("Running geographic spiral animation...")
     
@@ -142,9 +142,20 @@ def spiral_animation(strip, mapper: GeographicMapper, color=WHITE, wait_ms=30, f
     strip.fill(BLACK)
     strip.show()
     
-    # Light up LEDs in spiral order
+    # Generate rainbow colors for each LED
+    def get_rainbow_color(index, total):
+        """Generate rainbow color based on position in sequence"""
+        hue = (index / total) * 360  # 0-360 degrees
+        # Convert HSV to RGB (simplified)
+        import colorsys
+        r, g, b = colorsys.hsv_to_rgb(hue / 360, 1.0, 1.0)
+        return (int(r * 255), int(g * 255), int(b * 255))
+    
+    # Light up LEDs in spiral order with rainbow colors
+    total_leds = len(spiral_order)
     for i, led_index in enumerate(spiral_order):
-        strip[led_index] = color
+        rainbow_color = get_rainbow_color(i, total_leds)
+        strip[led_index] = rainbow_color
         strip.show()
         time.sleep(wait_ms / 1000.0)
     
