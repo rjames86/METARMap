@@ -46,8 +46,10 @@ class AirportLED:
         
         # Cache sun times to avoid expensive recalculation every frame
         if self._cached_date != obs_date or self._cached_sun_times is None:
+            print(f"DEBUG: {self.airport_code} calculating sun times for date {obs_date} at lat/lon {self.city.latitude}/{self.city.longitude}")
             self._cached_sun_times = AstralSun(self.city.observer, date=obs_date, tzinfo=self.city.tzinfo)
             self._cached_date = obs_date
+            print(f"DEBUG: {self.airport_code} calculated dawn: {self._cached_sun_times['dawn']}")
             
         return self._cached_sun_times
 
