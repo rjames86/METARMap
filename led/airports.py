@@ -28,9 +28,28 @@ class AirportLED:
         self.fade_start_time = 0
         self.fade_duration = 2.0  # seconds for each fade direction
         self.fade_direction = 1  # 1 = fading to black, -1 = fading to color
+        
+        # Cache sun times to avoid recalculating every frame
+        self._cached_sun_times = None
+        self._cached_date = None
 
     def __repr__(self):
         return f"AirportLED<{self.airport_code}>"
+
+    @property
+    def sun_times(self):
+        """Get sun times for the observation date, cached to avoid recalculation every frame"""
+        if self.metar_info is None or self.city is None:
+            return None
+            
+        obs_date = self.metar_info.observation_time.date()
+        
+        # Cache sun times to avoid expensive recalculation every frame
+        if self._cached_date != obs_date or self._cached_sun_times is None:
+            self._cached_sun_times = AstralSun(self.city.observer, date=obs_date, tzinfo=self.city.tzinfo)
+            self._cached_date = obs_date
+            
+        return self._cached_sun_times
 
     """
     Figure out how bright the light should be based on time of day
@@ -47,10 +66,10 @@ class AirportLED:
 
         try:
             obs_time = self.metar_info.observation_time
+            sun_times = self.sun_times
             
-            # Calculate sun times for the specific date of the observation
-            obs_date = obs_time.date()
-            sun_times = AstralSun(self.city.observer, date=obs_date, tzinfo=self.city.tzinfo)
+            if sun_times is None:
+                return color
             
             dawn = sun_times["dawn"]
             noon = sun_times["noon"] 
