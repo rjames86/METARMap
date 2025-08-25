@@ -46,25 +46,30 @@ class AirportLED:
         dimming_level = 1
 
         try:
+            obs_time = self.metar_info.observation_time
             
-            dawn = self.sun["dawn"]
-            noon = self.sun["noon"]
-            dusk = self.sun["dusk"]
+            # Calculate sun times for the specific date of the observation
+            obs_date = obs_time.date()
+            sun_times = AstralSun(self.city.observer, date=obs_date, tzinfo=self.city.tzinfo)
+            
+            dawn = sun_times["dawn"]
+            noon = sun_times["noon"] 
+            dusk = sun_times["dusk"]
 
             if (
-                self.metar_info.observation_time < dawn
-                or self.metar_info.observation_time > dusk
+                obs_time < dawn
+                or obs_time > dusk
             ):
                 dimming_level = MIN_BRIGHTNESS
-            elif dawn < self.metar_info.observation_time < noon:
+            elif dawn < obs_time < noon:
                 total_seconds = noon - dawn
-                seconds_until_noon = noon - self.metar_info.observation_time
+                seconds_until_noon = noon - obs_time
                 dimming_level = max(
                     1 - (seconds_until_noon / total_seconds), MIN_BRIGHTNESS
                 )
-            elif noon < self.metar_info.observation_time < dusk:
+            elif noon < obs_time < dusk:
                 total_seconds = dusk - noon
-                seconds_until_dusk = dusk - self.metar_info.observation_time
+                seconds_until_dusk = dusk - obs_time
                 dimming_level = max(seconds_until_dusk / total_seconds, MIN_BRIGHTNESS)
             return (G * dimming_level, R * dimming_level, B * dimming_level)
         except Exception as e:
