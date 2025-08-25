@@ -18,46 +18,15 @@ def run():
         strip = get_strip()
         metar_infos = get_metar_data()
         logger.info(f"Loaded weather data for {len(metar_infos)} airports")
-        
-        # Debug: Check initial data
-        test_airports = ['KSLC', 'KIAH', 'KDFW']
-        for airport in test_airports:
-            if airport in metar_infos:
-                info = metar_infos[airport]
-                logger.info(f"STARTUP DEBUG: {airport} has data - {info.flightCategory}, temp: {info.tempC}°C, obs_time: {info.observation_time}")
-            else:
-                logger.warning(f"STARTUP DEBUG: {airport} missing from initial data")
-        
         airport_leds = [AirportLED(strip, index, airport_code, metar_infos.get(airport_code)) for index, airport_code in enumerate(AIRPORT_CODES)]
         logger.info(f"Initialized {len(airport_leds)} LEDs")
-        
-        # Debug: Check initial LED colors
-        for i, led in enumerate(airport_leds[:5]):
-            if led.metar_info:
-                color = led.get_color()
-                logger.info(f"STARTUP DEBUG: LED[{i}] {led.airport_code}: color={color}, flight_cat={led.metar_info.flightCategory}")
 
         while True:
-            if time.time() - now >= 60 * 1: # 1 minute for debugging
+            if time.time() - now >= 60 * 5: # 5 minute
                 logger.info("Updating weather data...")
                 metar_infos = get_metar_data()
                 logger.info(f"Updated weather data for {len(metar_infos)} airports")
-                
-                # Debug: Check a few airports before recreating LEDs
-                test_airports = ['KSLC', 'KIAH', 'KDFW']
-                for airport in test_airports:
-                    if airport in metar_infos:
-                        info = metar_infos[airport]
-                        logger.info(f"DEBUG: {airport} has data - {info.flightCategory}, temp: {info.tempC}°C")
-                    else:
-                        logger.warning(f"DEBUG: {airport} missing from updated data")
-                
                 airport_leds = [AirportLED(strip, index, airport_code, metar_infos.get(airport_code)) for index, airport_code in enumerate(AIRPORT_CODES)]
-                
-                # Debug: Check LED creation
-                leds_with_data = sum(1 for led in airport_leds if led.metar_info is not None)
-                logger.info(f"DEBUG: Created {len(airport_leds)} LEDs, {leds_with_data} have data, {len(airport_leds) - leds_with_data} have no data")
-                
                 now = time.time()
 
             # Update all LEDs (static and fading)

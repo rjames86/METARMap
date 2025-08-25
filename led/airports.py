@@ -47,10 +47,8 @@ class AirportLED:
         
         # Cache sun times to avoid expensive recalculation every frame
         if self._cached_date != obs_date or self._cached_sun_times is None:
-            print(f"DEBUG: {self.airport_code} calculating sun times for date {obs_date} at lat/lon {self.city.latitude}/{self.city.longitude}")
             self._cached_sun_times = AstralSun(self.city.observer, date=obs_date, tzinfo=self.city.tzinfo)
             self._cached_date = obs_date
-            print(f"DEBUG: {self.airport_code} calculated dawn: {self._cached_sun_times['dawn']}")
             
         return self._cached_sun_times
 
@@ -80,38 +78,27 @@ class AirportLED:
             # Calculate sun times for local date
             sun_times = AstralSun(self.city.observer, date=local_date, tzinfo=self.city.tzinfo)
             
-            print(f"DEBUG: {self.airport_code} - UTC: {current_time}, local est: {local_time}, using date: {local_date}")
-            
             dawn = sun_times["dawn"]
             noon = sun_times["noon"] 
             dusk = sun_times["dusk"]
-            
-            print(f"DEBUG: {self.airport_code} - current:{current_time}, dawn:{dawn}, noon:{noon}, dusk:{dusk}")
 
             if (
                 current_time < dawn
                 or current_time > dusk
             ):
                 dimming_level = MIN_BRIGHTNESS
-                print(f"DEBUG: {self.airport_code} - NIGHT TIME, dimming to {MIN_BRIGHTNESS}")
             elif dawn < current_time < noon:
                 total_seconds = noon - dawn
                 seconds_until_noon = noon - current_time
                 dimming_level = max(
                     1 - (seconds_until_noon / total_seconds), MIN_BRIGHTNESS
                 )
-                print(f"DEBUG: {self.airport_code} - MORNING, dimming to {dimming_level}")
             elif noon < current_time < dusk:
                 total_seconds = dusk - noon
                 seconds_until_dusk = dusk - current_time
                 dimming_level = max(seconds_until_dusk / total_seconds, MIN_BRIGHTNESS)
-                print(f"DEBUG: {self.airport_code} - AFTERNOON, dimming to {dimming_level}")
-            else:
-                print(f"DEBUG: {self.airport_code} - DAY TIME, no dimming")
                 
-            final_color = (G * dimming_level, R * dimming_level, B * dimming_level)
-            print(f"DEBUG: {self.airport_code} - original color: {color}, dimmed: {final_color}")
-            return final_color
+            return (G * dimming_level, R * dimming_level, B * dimming_level)
         except Exception as e:
             return color
 
