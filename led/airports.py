@@ -70,10 +70,17 @@ class AirportLED:
         try:
             # Use current time for brightness, not historical observation time
             current_time = datetime.datetime.now(datetime.timezone.utc)
-            current_date = current_time.date()
             
-            # Calculate sun times for current date, not observation date
-            sun_times = AstralSun(self.city.observer, date=current_date, tzinfo=self.city.tzinfo)
+            # Get local time at airport to determine correct date
+            # Rough estimate: longitude degrees * 4 minutes = timezone offset
+            timezone_offset_hours = self.city.longitude / 15  # 15 degrees per hour
+            local_time = current_time + datetime.timedelta(hours=timezone_offset_hours)
+            local_date = local_time.date()
+            
+            # Calculate sun times for local date
+            sun_times = AstralSun(self.city.observer, date=local_date, tzinfo=self.city.tzinfo)
+            
+            print(f"DEBUG: {self.airport_code} - UTC: {current_time}, local est: {local_time}, using date: {local_date}")
             
             dawn = sun_times["dawn"]
             noon = sun_times["noon"] 
