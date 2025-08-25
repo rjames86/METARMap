@@ -1,9 +1,14 @@
 import os
 import time
+import logging
 from constants import BLACK, FLIGHT_CATEGORY_TO_COLOR, WHITE, WIND_BLINK_THRESHOLD
 
 import astral
 from astral.sun import sun as AstralSun
+
+logger = logging.getLogger(__name__)
+# Set debug level for color debugging
+logger.setLevel(logging.DEBUG)
 
 class AirportLED:
     def __init__(self, strip, pixel_index, airport_code, metar_info):
@@ -37,7 +42,10 @@ class AirportLED:
     """
 
     def determine_brightness(self, color):
+        logger.debug(f"{self.airport_code}: Determining brightness for color {color}")
+        
         if self.city is None:
+            logger.debug(f"{self.airport_code}: No city info, using full brightness")
             return color
 
         G, R, B = color
@@ -50,24 +58,36 @@ class AirportLED:
             dawn = self.sun["dawn"]
             noon = self.sun["noon"]
             dusk = self.sun["dusk"]
+            obs_time = self.metar_info.observation_time
+            
+            logger.debug(f"{self.airport_code}: Times - dawn: {dawn}, noon: {noon}, dusk: {dusk}, obs: {obs_time}")
 
             if (
-                self.metar_info.observation_time < dawn
-                or self.metar_info.observation_time > dusk
+                obs_time < dawn
+                or obs_time > dusk
             ):
                 dimming_level = MIN_BRIGHTNESS
-            elif dawn < self.metar_info.observation_time < noon:
+                logger.debug(f"{self.airport_code}: Night time, dimming to {MIN_BRIGHTNESS}")
+            elif dawn < obs_time < noon:
                 total_seconds = noon - dawn
-                seconds_until_noon = noon - self.metar_info.observation_time
+                seconds_until_noon = noon - obs_time
                 dimming_level = max(
                     1 - (seconds_until_noon / total_seconds), MIN_BRIGHTNESS
                 )
-            elif noon < self.metar_info.observation_time < dusk:
+                logger.debug(f"{self.airport_code}: Morning, dimming to {dimming_level}")
+            elif noon < obs_time < dusk:
                 total_seconds = dusk - noon
-                seconds_until_dusk = dusk - self.metar_info.observation_time
+                seconds_until_dusk = dusk - obs_time
                 dimming_level = max(seconds_until_dusk / total_seconds, MIN_BRIGHTNESS)
-            return (G * dimming_level, R * dimming_level, B * dimming_level)
+                logger.debug(f"{self.airport_code}: Afternoon, dimming to {dimming_level}")
+            else:
+                logger.debug(f"{self.airport_code}: Day time, full brightness")
+                
+            final_color = (G * dimming_level, R * dimming_level, B * dimming_level)
+            logger.debug(f"{self.airport_code}: Brightness adjusted color: {final_color}")
+            return final_color
         except Exception as e:
+            logger.error(f"{self.airport_code}: Error in brightness calculation: {e}")
             return color
 
     def calculate_fade_color(self, base_color, current_time):
@@ -102,28 +122,42 @@ class AirportLED:
         return (green_value, red_value, blue_value)
 
     def get_color(self):
+        logger.debug(f"{self.airport_code}: Getting color...")
+        
         if self.metar_info is None:
+            logger.debug(f"{self.airport_code}: No METAR info, returning BLACK")
             return self._color
+            
         if self.metar_info.flightCategory is None:
+            logger.debug(f"{self.airport_code}: No flight category, returning BLACK")
             return self._color
 
+        logger.debug(f"{self.airport_code}: Flight category = {self.metar_info.flightCategory}")
+        
         base_color = FLIGHT_CATEGORY_TO_COLOR.get(
             self.metar_info.flightCategory, WHITE
         )
+        logger.debug(f"{self.airport_code}: Base color from flight category = {base_color}")
+        
         base_color = self.determine_brightness(base_color)
+        logger.debug(f"{self.airport_code}: Color after brightness adjustment = {base_color}")
 
         should_fade = self.metar_info.windGustSpeed >= WIND_BLINK_THRESHOLD
+        logger.debug(f"{self.airport_code}: Wind gust speed = {self.metar_info.windGustSpeed}, threshold = {WIND_BLINK_THRESHOLD}, should_fade = {should_fade}")
         
         # Start or stop fading based on wind conditions
         if should_fade and not self.should_fade:
             self.should_fade = True
             self.fade_start_time = time.time()
             self.fade_direction = 1
+            logger.debug(f"{self.airport_code}: Started fading due to wind gusts")
         elif not should_fade:
             self.should_fade = False
         
         # Calculate the current color (static or fading)
-        return self.calculate_fade_color(base_color, time.time())
+        final_color = self.calculate_fade_color(base_color, time.time())
+        logger.debug(f"{self.airport_code}: Final color = {final_color}")
+        return final_color
     
     def get_static_color(self):
         if self.metar_info is None:
@@ -137,7 +171,9 @@ class AirportLED:
         return self.determine_brightness(new_color)
 
     def set_pixel_color(self):
-        self.strip[self.pixel_index] = self.get_color()
+        color = self.get_color()
+        logger.debug(f"{self.airport_code}: Setting LED[{self.pixel_index}] to color {color}")
+        self.strip[self.pixel_index] = color
         
 
 def get_airport_codes():
