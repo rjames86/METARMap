@@ -1,10 +1,5 @@
-import neopixel
-import board
-
-
 # LED strip configuration:
 LED_COUNT = 249
-LED_PIN = board.D18 
 LED_BRIGHTNESS = 12  # Set to 0 for darkest and 255 for brightest
 
 BLACK = (0, 0, 0)
@@ -27,6 +22,12 @@ WIND_BLINK_THRESHOLD = 10
 # Animation timing
 ANIMATION_FRAME_DELAY = 0.03  # 33 FPS for smooth fades
 
-strip = neopixel.NeoPixel(
-    LED_PIN, LED_COUNT, brightness=LED_BRIGHTNESS, auto_write=False
-)
+def get_strip():
+    """Lazy-load the NeoPixel strip to avoid import issues during testing"""
+    import neopixel
+    import board
+    
+    LED_PIN = board.D18
+    return neopixel.NeoPixel(
+        LED_PIN, LED_COUNT, brightness=LED_BRIGHTNESS, auto_write=False
+    )
