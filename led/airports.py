@@ -1,10 +1,7 @@
 import os
 import time
-import datetime
 from constants import BLACK, FLIGHT_CATEGORY_TO_COLOR, WHITE, WIND_BLINK_THRESHOLD
-
-import astral
-from astral.sun import sun as AstralSun
+from sun_calculator import SunCalculator
 
 class AirportLED:
     def __init__(self, strip, pixel_index, airport_code, metar_info):
@@ -14,14 +11,12 @@ class AirportLED:
         self.metar_info = metar_info
 
         if self.metar_info is None:
-            self.city = None
+            self.sun_calculator = None
         else:
-            self.city = astral.LocationInfo(
-                timezone="UTC",
-                latitude=self.metar_info.latitude,
-                longitude=self.metar_info.longitude,
+            self.sun_calculator = SunCalculator(
+                self.metar_info.latitude,
+                self.metar_info.longitude
             )
-            self.sun = AstralSun(self.city.observer, tzinfo=self.city.tzinfo)
         self._color = BLACK
 
         # Fade state tracking
@@ -29,78 +24,16 @@ class AirportLED:
         self.fade_start_time = 0
         self.fade_duration = 2.0  # seconds for each fade direction
         self.fade_direction = 1  # 1 = fading to black, -1 = fading to color
-        
-        # Cache sun times to avoid recalculating every frame
-        self._cached_sun_times = None
-        self._cached_date = None
 
     def __repr__(self):
         return f"AirportLED<{self.airport_code}>"
 
-    @property
-    def sun_times(self):
-        """Get sun times for the observation date, cached to avoid recalculation every frame"""
-        if self.metar_info is None or self.city is None:
-            return None
-            
-        obs_date = self.metar_info.observation_time.date()
-        
-        # Cache sun times to avoid expensive recalculation every frame
-        if self._cached_date != obs_date or self._cached_sun_times is None:
-            self._cached_sun_times = AstralSun(self.city.observer, date=obs_date, tzinfo=self.city.tzinfo)
-            self._cached_date = obs_date
-            
-        return self._cached_sun_times
-
-    """
-    Figure out how bright the light should be based on time of day
-    """
-
     def determine_brightness(self, color):
-        if self.city is None:
+        """Apply brightness dimming based on time of day"""
+        if self.sun_calculator is None:
             return color
-
-        G, R, B = color
-
-        MIN_BRIGHTNESS = 0.01
-        dimming_level = 1
-
-        try:
-            # Use current time for brightness, not historical observation time
-            current_time = datetime.datetime.now(datetime.timezone.utc)
-            
-            # Get local time at airport to determine correct date
-            # Rough estimate: longitude degrees * 4 minutes = timezone offset
-            timezone_offset_hours = self.city.longitude / 15  # 15 degrees per hour
-            local_time = current_time + datetime.timedelta(hours=timezone_offset_hours)
-            local_date = local_time.date()
-            
-            # Calculate sun times for local date
-            sun_times = AstralSun(self.city.observer, date=local_date, tzinfo=self.city.tzinfo)
-            
-            dawn = sun_times["dawn"]
-            noon = sun_times["noon"] 
-            dusk = sun_times["dusk"]
-
-            if (
-                current_time < dawn
-                or current_time > dusk
-            ):
-                dimming_level = MIN_BRIGHTNESS
-            elif dawn < current_time < noon:
-                total_seconds = noon - dawn
-                seconds_until_noon = noon - current_time
-                dimming_level = max(
-                    1 - (seconds_until_noon / total_seconds), MIN_BRIGHTNESS
-                )
-            elif noon < current_time < dusk:
-                total_seconds = dusk - noon
-                seconds_until_dusk = dusk - current_time
-                dimming_level = max(seconds_until_dusk / total_seconds, MIN_BRIGHTNESS)
-                
-            return (G * dimming_level, R * dimming_level, B * dimming_level)
-        except Exception as e:
-            return color
+        
+        return self.sun_calculator.apply_brightness_to_color(color)
 
     def calculate_fade_color(self, base_color, current_time):
         if not self.should_fade:
