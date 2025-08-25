@@ -135,12 +135,14 @@ class MetarInfos(defaultdict):
                 except (ValueError, TypeError):
                     vis = 0
 
-            if metar.get("reportTime"):
+            if metar.get("obsTime"):
                 try:
-                    obsTime = datetime.datetime.fromisoformat(
-                        metar.get("reportTime").replace("Z", "+00:00")
-                    ).replace(tzinfo=datetime.timezone.utc)
-                except (ValueError, AttributeError):
+                    # obsTime is a Unix timestamp
+                    obsTime = datetime.datetime.fromtimestamp(
+                        metar.get("obsTime"), tz=datetime.timezone.utc
+                    )
+                except (ValueError, TypeError, OSError):
+                    logger.warning(f"{stationId}: Invalid obsTime timestamp '{metar.get('obsTime')}', setting to None")
                     obsTime = None
 
             if metar.get("clouds"):
