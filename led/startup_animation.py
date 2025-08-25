@@ -1,6 +1,7 @@
 import time
 import math
 from constants import LED_COUNT, BLACK, GREEN, BLUE, RED, PURPLE, YELLOW, WHITE
+from geographic_mapping import GeographicMapper, spiral_animation, regional_wave_animation
 
 
 def wheel(pos):
@@ -135,25 +136,35 @@ def startup_sequence(strip, logger=None):
     strip.show()
     time.sleep(0.3)
     
-    # 2. Rainbow cycle
+    # 2. Geographic spiral animation (the cool new feature!)
     if logger:
-        logger.info("Rainbow cycle animation...")
-    rainbow_cycle(strip, wait_ms=15, iterations=2)
+        logger.info("Geographic spiral animation...")
+    try:
+        mapper = GeographicMapper()
+        spiral_animation(strip, mapper, color=GREEN, wait_ms=25, fade_duration=800)
+        time.sleep(0.5)
+        
+        # 3. Regional wave animation
+        if logger:
+            logger.info("Regional wave animation...")
+        regional_wave_animation(strip, mapper, wait_ms=400)
+        time.sleep(0.5)
+        
+    except Exception as e:
+        if logger:
+            logger.warning(f"Geographic animations failed: {e}, falling back to basic animations")
+        # Fall back to basic rainbow if geographic fails
+        rainbow_cycle(strip, wait_ms=15, iterations=1)
     
-    # 3. Flight category demo
+    # 4. Flight category demo
     if logger:
         logger.info("Flight category color demo...")
     flight_category_demo(strip, wait_ms=600)
     
-    # 4. Breathing effect with green
+    # 5. Breathing effect with green
     if logger:
         logger.info("Breathing effect...")
     breathing_effect(strip, GREEN, wait_ms=8, cycles=2)
-    
-    # 5. Runway lights effect
-    if logger:
-        logger.info("Runway lights effect...")
-    runway_lights(strip, wait_ms=80, iterations=2)
     
     # Final clear
     strip.fill(BLACK)
