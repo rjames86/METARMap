@@ -1,5 +1,6 @@
 import os
 import time
+import datetime
 from constants import BLACK, FLIGHT_CATEGORY_TO_COLOR, WHITE, WIND_BLINK_THRESHOLD
 
 import astral
@@ -67,35 +68,35 @@ class AirportLED:
         dimming_level = 1
 
         try:
-            obs_time = self.metar_info.observation_time
-            sun_times = self.sun_times
+            # Use current time for brightness, not historical observation time
+            current_time = datetime.datetime.now(datetime.timezone.utc)
+            current_date = current_time.date()
             
-            if sun_times is None:
-                print(f"DEBUG: {self.airport_code} sun_times is None")
-                return color
+            # Calculate sun times for current date, not observation date
+            sun_times = AstralSun(self.city.observer, date=current_date, tzinfo=self.city.tzinfo)
             
             dawn = sun_times["dawn"]
             noon = sun_times["noon"] 
             dusk = sun_times["dusk"]
             
-            print(f"DEBUG: {self.airport_code} - obs:{obs_time}, dawn:{dawn}, noon:{noon}, dusk:{dusk}")
+            print(f"DEBUG: {self.airport_code} - current:{current_time}, dawn:{dawn}, noon:{noon}, dusk:{dusk}")
 
             if (
-                obs_time < dawn
-                or obs_time > dusk
+                current_time < dawn
+                or current_time > dusk
             ):
                 dimming_level = MIN_BRIGHTNESS
                 print(f"DEBUG: {self.airport_code} - NIGHT TIME, dimming to {MIN_BRIGHTNESS}")
-            elif dawn < obs_time < noon:
+            elif dawn < current_time < noon:
                 total_seconds = noon - dawn
-                seconds_until_noon = noon - obs_time
+                seconds_until_noon = noon - current_time
                 dimming_level = max(
                     1 - (seconds_until_noon / total_seconds), MIN_BRIGHTNESS
                 )
                 print(f"DEBUG: {self.airport_code} - MORNING, dimming to {dimming_level}")
-            elif noon < obs_time < dusk:
+            elif noon < current_time < dusk:
                 total_seconds = dusk - noon
-                seconds_until_dusk = dusk - obs_time
+                seconds_until_dusk = dusk - current_time
                 dimming_level = max(seconds_until_dusk / total_seconds, MIN_BRIGHTNESS)
                 print(f"DEBUG: {self.airport_code} - AFTERNOON, dimming to {dimming_level}")
             else:
