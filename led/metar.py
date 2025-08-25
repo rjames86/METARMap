@@ -6,6 +6,7 @@ from airports import AirportLED, AIRPORT_CODES
 from constants import get_strip
 from metar_data import get_metar_data
 from shared_logger import setup_logger
+from startup_animation import startup_sequence
 import time
 
 logger = setup_logger('metarmap-led')
@@ -16,6 +17,10 @@ def run():
 
     try:
         strip = get_strip()
+        
+        # Run startup animation sequence
+        startup_sequence(strip, logger)
+        
         metar_infos = get_metar_data()
         logger.info(f"Loaded weather data for {len(metar_infos)} airports")
         airport_leds = [AirportLED(strip, index, airport_code, metar_infos.get(airport_code)) for index, airport_code in enumerate(AIRPORT_CODES)]
