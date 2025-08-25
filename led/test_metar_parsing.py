@@ -112,9 +112,33 @@ class TestMetarDataParsing(unittest.TestCase):
     
     def test_json_parsing(self):
         """Test that JSON parsing produces same results as XML"""
-        # This will be implemented once we add JSON support to metar_data.py
-        # It should use the same expected values to verify equivalence
-        pass
+        result = MetarInfos.from_json(self.mock_json_response)
+        
+        self.assertIn('KSLC', result)
+        kslc = result['KSLC']
+        
+        # Test all expected values (same as XML test)
+        self.assertEqual(kslc.airport_code, self.expected_airport_code)
+        self.assertEqual(kslc.flightCategory, self.expected_flight_category)
+        self.assertEqual(kslc.tempC, self.expected_temp_c)
+        self.assertEqual(kslc.dewpointC, self.expected_dewpoint_c)
+        self.assertEqual(kslc.windSpeed, self.expected_wind_speed)
+        self.assertEqual(kslc.windDir, self.expected_wind_dir)
+        self.assertEqual(kslc.windGustSpeed, self.expected_wind_gust_speed)
+        self.assertEqual(kslc.vis, self.expected_vis)
+        
+        # Altimeter should be close (unit conversion)
+        self.assertAlmostEqual(kslc.altimHg, self.expected_altim_hg, places=2)
+        
+        self.assertEqual(kslc.latitude, self.expected_latitude)
+        self.assertEqual(kslc.longitude, self.expected_longitude)
+        self.assertEqual(kslc.observation_time, self.expected_obs_time)
+        
+        # Test sky conditions
+        self.assertEqual(len(kslc.skyConditions), len(self.expected_sky_conditions))
+        for i, expected_cloud in enumerate(self.expected_sky_conditions):
+            self.assertEqual(kslc.skyConditions[i]['cover'], expected_cloud['cover'])
+            self.assertEqual(kslc.skyConditions[i]['cloudBaseFt'], expected_cloud['cloudBaseFt'])
     
     def test_flight_category_calculation(self):
         """Test flight category calculation logic"""
