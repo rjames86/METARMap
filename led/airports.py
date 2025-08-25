@@ -54,11 +54,15 @@ class AirportLED:
         dimming_level = 1
 
         try:
-            
-            dawn = self.sun["dawn"]
-            noon = self.sun["noon"]
-            dusk = self.sun["dusk"]
             obs_time = self.metar_info.observation_time
+            
+            # Calculate sun times for the specific date of the observation
+            obs_date = obs_time.date()
+            sun_times = AstralSun(self.city.observer, date=obs_date, tzinfo=self.city.tzinfo)
+            
+            dawn = sun_times["dawn"]
+            noon = sun_times["noon"] 
+            dusk = sun_times["dusk"]
             
             logger.debug(f"{self.airport_code}: Times - dawn: {dawn}, noon: {noon}, dusk: {dusk}, obs: {obs_time}")
 
