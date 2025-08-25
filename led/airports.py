@@ -69,28 +69,39 @@ class AirportLED:
             sun_times = self.sun_times
             
             if sun_times is None:
+                print(f"DEBUG: {self.airport_code} sun_times is None")
                 return color
             
             dawn = sun_times["dawn"]
             noon = sun_times["noon"] 
             dusk = sun_times["dusk"]
+            
+            print(f"DEBUG: {self.airport_code} - obs:{obs_time}, dawn:{dawn}, noon:{noon}, dusk:{dusk}")
 
             if (
                 obs_time < dawn
                 or obs_time > dusk
             ):
                 dimming_level = MIN_BRIGHTNESS
+                print(f"DEBUG: {self.airport_code} - NIGHT TIME, dimming to {MIN_BRIGHTNESS}")
             elif dawn < obs_time < noon:
                 total_seconds = noon - dawn
                 seconds_until_noon = noon - obs_time
                 dimming_level = max(
                     1 - (seconds_until_noon / total_seconds), MIN_BRIGHTNESS
                 )
+                print(f"DEBUG: {self.airport_code} - MORNING, dimming to {dimming_level}")
             elif noon < obs_time < dusk:
                 total_seconds = dusk - noon
                 seconds_until_dusk = dusk - obs_time
                 dimming_level = max(seconds_until_dusk / total_seconds, MIN_BRIGHTNESS)
-            return (G * dimming_level, R * dimming_level, B * dimming_level)
+                print(f"DEBUG: {self.airport_code} - AFTERNOON, dimming to {dimming_level}")
+            else:
+                print(f"DEBUG: {self.airport_code} - DAY TIME, no dimming")
+                
+            final_color = (G * dimming_level, R * dimming_level, B * dimming_level)
+            print(f"DEBUG: {self.airport_code} - original color: {color}, dimmed: {final_color}")
+            return final_color
         except Exception as e:
             return color
 
