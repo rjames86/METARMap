@@ -1,14 +1,15 @@
 from threading import local
-import xml.etree.ElementTree as ET
 import requests
 from dateutil import parser
 from dateutil.tz import gettz
 import datetime
 import json
+import logging
 
+logger = logging.getLogger(__name__)
 
 class AirportData:
-    URL = "https://aviationweather.gov/cgi-bin/data/dataserver.php?dataSource=metars&requestType=retrieve&format=xml&hoursBeforeNow=1.5&stationString="
+    URL = "https://aviationweather.gov/api/data/metar?format=json&hours=1.5&ids="
     METAR_TAGS = [
         "altim_in_hg",
         "dewpoint_c",
@@ -166,25 +167,74 @@ class AirportData:
     @property
     def data(self):
         if self._data is None:
-            results = []
-            root = ET.fromstring(self.get_content())
-            for metar in root.iter("METAR"):
-                result = {}
-                for child in metar:
-                    if child.tag in self.METAR_TAGS:
-                        result[child.tag] = child.text
-                    elif child.tag in self.ATTRIBUTE_TAGS:
-                        result[child.tag] = {}
-                        attributes = self.ATTRIBUTE_TAGS[child.tag]
-                        for key, value in child.attrib.items():
-                            result[child.tag][key] = value
+            try:
+                json_data = self.get_content()
+                if not json_data:
+                    self._data = {}
+                    return self._data
 
-                results.append(result)
-            if len(results) > 0:
-                self._data = results[0]
-            else:
+                # Handle multiple records for same station, take latest
+                station_records = []
+                for metar in json_data:
+                    if metar.get("icaoId") == self.airport_code:
+                        station_records.append(metar)
+
+                if not station_records:
+                    self._data = {}
+                    return self._data
+
+                # Get latest record by obsTime
+                latest_record = max(station_records, key=lambda r: r.get("obsTime", 0))
+
+                # Map JSON fields to expected property names
+                result = {
+                    "altim_in_hg": (latest_record.get("altim", 0.0) / 33.8639) if latest_record.get("altim") else None,  # Convert hPa to inHg
+                    "dewpoint_c": latest_record.get("dewp"),
+                    "elevation_m": latest_record.get("elev"),
+                    "flight_category": latest_record.get("fltCat"),
+                    "latitude": latest_record.get("lat"),
+                    "longitude": latest_record.get("lon"),
+                    "maxT_c": None,  # Not available in JSON API
+                    "metar_type": "METAR",  # Default
+                    "minT_c": None,  # Not available in JSON API
+                    "observation_time": self._convert_obs_time(latest_record.get("obsTime")),
+                    "sea_level_pressure_mb": latest_record.get("altim"),  # Already in hPa/mb
+                    "station_id": latest_record.get("icaoId"),
+                    "temp_c": latest_record.get("temp"),
+                    "visibility_statute_mi": latest_record.get("visib"),
+                    "wind_dir_degrees": latest_record.get("wdir"),
+                    "wind_speed_kt": latest_record.get("wspd"),
+                    "raw_text": latest_record.get("rawOb", ""),
+                }
+
+                # Handle sky condition
+                clouds = latest_record.get("clouds", [])
+                if clouds:
+                    cloud = clouds[0]  # Take first cloud layer
+                    result["sky_condition"] = {
+                        "sky_cover": cloud.get("cover"),
+                        "cloud_base_ft_agl": cloud.get("base")
+                    }
+                else:
+                    result["sky_condition"] = None
+
+                self._data = result
+
+            except Exception as e:
+                logger.error(f"Error parsing METAR data: {e}")
                 self._data = {}
+
         return self._data
+
+    def _convert_obs_time(self, obs_time_unix):
+        """Convert Unix timestamp to ISO datetime string"""
+        if obs_time_unix is None:
+            return None
+        try:
+            dt = datetime.datetime.fromtimestamp(obs_time_unix, tz=datetime.timezone.utc)
+            return dt.isoformat().replace("+00:00", "Z")
+        except (ValueError, TypeError, OSError):
+            return None
 
     def should_refresh(self):
         now = datetime.datetime.now(tz=gettz(self.TIMEZONE))
@@ -197,7 +247,18 @@ class AirportData:
 
     def get_content(self):
         print("Fetching fresh airport data...")
-        return requests.get(self.URL + self.airport_code).content
+        try:
+            url = self.URL + self.airport_code
+            logger.debug(f"Fetching METAR data from: {url}")
+            response = requests.get(url, timeout=30)
+            response.raise_for_status()
+            return response.json()
+        except requests.RequestException as e:
+            logger.error(f"Failed to fetch METAR data: {e}")
+            return []
+        except ValueError as e:
+            logger.error(f"Failed to parse JSON response: {e}")
+            return []
 
     def write_json(self):
         with open("airport_data", "wb+") as f:
