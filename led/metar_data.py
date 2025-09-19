@@ -2,8 +2,11 @@ from collections import defaultdict
 import xml.etree.ElementTree as ET
 import datetime
 import requests
+import logging
 
 from airports import AIRPORT_CODES
+
+logger = logging.getLogger(__name__)
 
 class MetarInfo:
     def __init__(
@@ -84,18 +87,37 @@ class MetarInfos(defaultdict):
     def from_json(cls, json_data):
         """Parse JSON data from new API v4.0"""
         cls_instance = cls()
-        
+
+        # Group records by station ID to handle multiple records per airport
+        station_records = {}
         for metar in json_data:
             stationId = metar.get("icaoId")
             if not stationId:
                 continue
-            
-            # Calculate flight category from visibility and cloud data
-            flightCategory = cls._calculate_flight_category(metar)
+
+            # Group by station ID
+            if stationId not in station_records:
+                station_records[stationId] = []
+            station_records[stationId].append(metar)
+
+        # Process each station, taking the latest record
+        for stationId, records in station_records.items():
+            # Find the record with the latest obsTime
+            latest_record = max(records, key=lambda r: r.get("obsTime", 0))
+            metar = latest_record
+
+            # Use flight category from API (fltCat field)
+            flightCategory = metar.get("fltCat")
             if not flightCategory:
+                logger.warning(f"{stationId}: No flight category in API response, skipping")
                 continue
                 
-            windDir = str(metar.get("wdir", "")) if metar.get("wdir") is not None else ""
+            # Handle wind direction - can be integer (degrees) or string ("VRB" for variable)
+            wdir_raw = metar.get("wdir")
+            if wdir_raw is not None:
+                windDir = str(wdir_raw)
+            else:
+                windDir = ""
             windSpeed = metar.get("wspd", 0) or 0
             windGustSpeed = metar.get("wgst", 0) or 0
             windGust = False
@@ -220,8 +242,31 @@ class MetarInfos(defaultdict):
         return cls
     
 def get_metar_data():
-    url = "https://aviationweather.gov/cgi-bin/data/dataserver.php?dataSource=metars&requestType=retrieve&format=xml&hoursBeforeNow=1.5&stationString="
-    for airportcode in AIRPORT_CODES:
-        url = url + airportcode + ","
-    content = requests.get(url).text
-    return MetarInfos.from_xml(content)
+    stations = ",".join(AIRPORT_CODES)
+    url = f"https://aviationweather.gov/api/data/metar?ids={stations}&format=json&hours=1.5"
+
+    logger.info(f"Fetching METAR data for {len(AIRPORT_CODES)} airports")
+    logger.debug(f"API URL: {url}")
+
+    try:
+        response = requests.get(url, timeout=30)
+        response.raise_for_status()
+        logger.info(f"Successfully fetched METAR data - HTTP {response.status_code}")
+
+        json_data = response.json()
+        logger.info(f"Received {len(json_data)} METAR records from API")
+
+        metar_infos = MetarInfos.from_json(json_data)
+        logger.info(f"Successfully parsed {len(metar_infos)} METAR records")
+
+        return metar_infos
+
+    except requests.RequestException as e:
+        logger.error(f"Failed to fetch METAR data: {e}")
+        raise
+    except ValueError as e:
+        logger.error(f"Failed to parse JSON response: {e}")
+        raise
+    except Exception as e:
+        logger.error(f"Unexpected error in get_metar_data: {e}")
+        raise
