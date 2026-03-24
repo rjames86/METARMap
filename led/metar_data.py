@@ -89,15 +89,12 @@ class MetarInfos(defaultdict):
         cls_instance = cls()
 
         # Group records by station ID to handle multiple records per airport
-        station_records = {}
+        station_records = defaultdict(list)
         for metar in json_data:
             stationId = metar.get("icaoId")
             if not stationId:
                 continue
 
-            # Group by station ID
-            if stationId not in station_records:
-                station_records[stationId] = []
             station_records[stationId].append(metar)
 
         # Process each station, taking the latest record
