@@ -132,7 +132,7 @@ if ! command -v pip3 &>/dev/null; then
     apt-get install -y python3-pip
 fi
 
-pip3 install \
+pip3 install --break-system-packages \
     requests \
     astral \
     adafruit-circuitpython-neopixel \
