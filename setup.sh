@@ -91,6 +91,11 @@ if [ -d "$INSTALL_DIR" ]; then
     fi
 fi
 
+# ─── Update package lists ─────────────────────────────────────────────────────
+
+log "Updating package lists..."
+apt-get update -qq
+
 # ─── Clone repository ─────────────────────────────────────────────────────────
 
 log "Downloading METARMap..."
