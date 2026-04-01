@@ -1,0 +1,4 @@
+requests
+astral
+adafruit-circuitpython-neopixel
+adafruit-blinka

@@ -142,11 +142,7 @@ fi
 # ─── Install Python dependencies ──────────────────────────────────────────────
 
 log "Installing Python packages into venv..."
-"$VENV_PYTHON" -m pip install \
-    requests \
-    astral \
-    adafruit-circuitpython-neopixel \
-    adafruit-blinka
+"$VENV_PYTHON" -m pip install -r "$TEMP_DIR/METARMap/requirements.txt"
 
 # ─── Install systemd service ──────────────────────────────────────────────────
 
