@@ -137,12 +137,11 @@ else
 fi
 
 VENV_PYTHON="$VENV_DIR/bin/python3"
-VENV_PIP="$VENV_DIR/bin/pip3"
 
 # ─── Install Python dependencies ──────────────────────────────────────────────
 
 log "Installing Python packages into venv..."
-"$VENV_PIP" install \
+"$VENV_PYTHON" -m pip install \
     requests \
     astral \
     adafruit-circuitpython-neopixel \
