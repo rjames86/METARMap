@@ -11,6 +11,7 @@ LED_DIR="$INSTALL_DIR/led"
 SERVICE_NAME="metarmap"
 SERVICE_FILE="/etc/systemd/system/metarmap.service"
 LOG_FILE="/var/log/metarmap-setup.log"
+VENV_DIR="/root/env"
 
 # ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -122,17 +123,26 @@ cp -r "$TEMP_DIR/METARMap/led/." "$LED_DIR/"
 # Copy shared logger (referenced by led/metar.py via sys.path)
 cp "$TEMP_DIR/METARMap/shared_logger.py" "$INSTALL_DIR/"
 
-# ─── Install Python dependencies ──────────────────────────────────────────────
+# ─── Set up Python virtual environment ───────────────────────────────────────
 
-log "Installing Python packages..."
-
-# Ensure pip is available
-if ! command -v pip3 &>/dev/null; then
-    log "  pip3 not found — installing..."
-    apt-get install -y python3-pip
+# The Adafruit CircuitPython installer creates a venv at ~/env with
+# --system-site-packages (which includes blinka/neopixel). Use it if present,
+# otherwise create it now.
+if [ -f "$VENV_DIR/bin/python3" ]; then
+    log "Found existing virtual environment at $VENV_DIR — using it."
+else
+    log "No virtual environment found at $VENV_DIR — creating one..."
+    apt-get install -y python3-venv
+    python3 -m venv "$VENV_DIR" --system-site-packages
 fi
 
-pip3 install --break-system-packages \
+VENV_PYTHON="$VENV_DIR/bin/python3"
+VENV_PIP="$VENV_DIR/bin/pip3"
+
+# ─── Install Python dependencies ──────────────────────────────────────────────
+
+log "Installing Python packages into venv..."
+"$VENV_PIP" install \
     requests \
     astral \
     adafruit-circuitpython-neopixel \
@@ -152,7 +162,7 @@ Wants=network-online.target
 Type=simple
 User=root
 WorkingDirectory=$LED_DIR
-ExecStart=/usr/bin/python3 $LED_DIR/metar.py
+ExecStart=$VENV_PYTHON $LED_DIR/metar.py
 Restart=always
 RestartSec=10
 StandardOutput=journal
@@ -186,7 +196,7 @@ else
     echo "[setup] Full setup log: $LOG_FILE" | tee -a "$LOG_FILE"
     echo "[setup] To investigate further:" | tee -a "$LOG_FILE"
     echo "[setup]   sudo journalctl -u metarmap -f        # live service logs" | tee -a "$LOG_FILE"
-    echo "[setup]   sudo python3 $LED_DIR/metar.py        # run directly to see errors" | tee -a "$LOG_FILE"
+    echo "[setup]   sudo $VENV_PYTHON $LED_DIR/metar.py   # run directly to see errors" | tee -a "$LOG_FILE"
     exit 1
 fi
 
@@ -197,7 +207,7 @@ log "Useful commands:"
 log "  sudo systemctl status metarmap          # Check status"
 log "  sudo systemctl restart metarmap         # Restart"
 log "  sudo journalctl -u metarmap -f          # View live logs"
-log "  sudo python3 $LED_DIR/metar.py          # Run directly (shows errors inline)"
+log "  sudo $VENV_PYTHON $LED_DIR/metar.py     # Run directly (shows errors inline)"
 log ""
 log "To customise airports or LED settings, edit:"
 log "  $LED_DIR/airports       # Airport list (one ICAO code per line)"
