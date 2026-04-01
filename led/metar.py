@@ -3,7 +3,7 @@ import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from airports import AirportLED, AIRPORT_CODES
-from constants import get_strip
+from constants import get_strip, MAIN_LOOP_DELAY
 from metar_data import get_metar_data
 from shared_logger import setup_logger
 from startup_animation import startup_sequence
@@ -39,7 +39,7 @@ def run():
                 airport_led.set_pixel_color()
             strip.show()
             
-            time.sleep(0.05)  # ~20 FPS for smooth fades
+            time.sleep(MAIN_LOOP_DELAY)
             
     except KeyboardInterrupt:
         logger.info("Shutting down...")

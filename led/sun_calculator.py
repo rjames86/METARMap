@@ -19,6 +19,11 @@ class SunCalculator:
         self._cached_current_sun_times = None
         self._cached_current_date = None
 
+        # Cache brightness factor — only needs to update every minute
+        self._brightness_cache_value = None
+        self._brightness_cache_time = None
+        self._BRIGHTNESS_CACHE_SECONDS = 60
+
     def get_sun_times_for_date(self, date):
         """Get sun times for a specific date, cached to avoid recalculation every frame"""
         if self._cached_date != date or self._cached_sun_times is None:
@@ -46,6 +51,13 @@ class SunCalculator:
     
     def calculate_brightness_factor(self, current_time=None):
         """Calculate brightness dimming factor based on time of day (0.01 to 1.0)"""
+        import time as _time
+        now_monotonic = _time.monotonic()
+        if (self._brightness_cache_value is not None and
+                self._brightness_cache_time is not None and
+                now_monotonic - self._brightness_cache_time < self._BRIGHTNESS_CACHE_SECONDS):
+            return self._brightness_cache_value
+
         if current_time is None:
             current_time = datetime.datetime.now(datetime.timezone.utc)
         
@@ -61,17 +73,21 @@ class SunCalculator:
             dusk = sun_times["dusk"]
 
             if current_time < dawn or current_time > dusk:
-                return MIN_BRIGHTNESS
+                result = MIN_BRIGHTNESS
             elif dawn < current_time < noon:
                 total_seconds = noon - dawn
                 seconds_until_noon = noon - current_time
-                return max(1 - (seconds_until_noon / total_seconds), MIN_BRIGHTNESS)
+                result = max(1 - (seconds_until_noon / total_seconds), MIN_BRIGHTNESS)
             elif noon < current_time < dusk:
                 total_seconds = dusk - noon
                 seconds_until_dusk = dusk - current_time
-                return max(seconds_until_dusk / total_seconds, MIN_BRIGHTNESS)
+                result = max(seconds_until_dusk / total_seconds, MIN_BRIGHTNESS)
             else:
-                return 1.0
+                result = 1.0
+
+            self._brightness_cache_value = result
+            self._brightness_cache_time = now_monotonic
+            return result
         except Exception:
             return 1.0
     
