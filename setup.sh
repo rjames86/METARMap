@@ -92,11 +92,6 @@ if [ -d "$INSTALL_DIR" ]; then
     fi
 fi
 
-# ─── Update package lists ─────────────────────────────────────────────────────
-
-log "Updating package lists..."
-apt-get update -qq || warn "Package list update failed (possibly EOL OS) — continuing with cached lists..."
-
 # ─── Clone repository ─────────────────────────────────────────────────────────
 
 log "Downloading METARMap..."
