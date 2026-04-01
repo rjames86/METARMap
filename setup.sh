@@ -133,6 +133,12 @@ fi
 
 VENV_PYTHON="$VENV_DIR/bin/python3"
 
+# Ensure pip is available in the venv (Adafruit installer omits it)
+if ! "$VENV_PYTHON" -m pip --version &>/dev/null; then
+    log "  pip not found in venv — bootstrapping with ensurepip..."
+    "$VENV_PYTHON" -m ensurepip --upgrade
+fi
+
 # ─── Install Python dependencies ──────────────────────────────────────────────
 
 log "Installing Python packages into venv..."
