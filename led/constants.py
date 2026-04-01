@@ -20,9 +20,21 @@ FLIGHT_CATEGORY_TO_COLOR = {
 WIND_BLINK_THRESHOLD = 10
 
 # Animation timing
-# Increase this on slower hardware (e.g. 0.1 for Pi Zero W, 0.05 for Pi Zero 2 W+)
 ANIMATION_FRAME_DELAY = 0.03  # 33 FPS for smooth fades
-MAIN_LOOP_DELAY = 0.05  # seconds between LED updates (~20 FPS)
+
+def _detect_loop_delay():
+    """Use a slower loop on Pi Zero W (single-core) to avoid pegging the CPU"""
+    try:
+        with open('/proc/device-tree/model', 'r') as f:
+            model = f.read().lower()
+        # Pi Zero 2 W contains both "zero 2" — only slow down the original Zero W
+        if 'zero w' in model and 'zero 2' not in model:
+            return 0.1  # ~10 FPS
+    except Exception:
+        pass
+    return 0.05  # ~20 FPS
+
+MAIN_LOOP_DELAY = _detect_loop_delay()
 
 def get_strip():
     """Lazy-load the NeoPixel strip to avoid import issues during testing"""
