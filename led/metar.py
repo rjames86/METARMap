@@ -11,15 +11,27 @@ import time
 
 logger = setup_logger('metarmap-led')
 
+_BOOT_FLAG = '/run/metarmap_started'
+
+def _is_first_start():
+    """Returns True on the first start after a reboot, False on crash restarts."""
+    if os.path.exists(_BOOT_FLAG):
+        return False
+    open(_BOOT_FLAG, 'w').close()
+    return True
+
 def run():
     logger.info("METARMap starting up...")
     now = time.time()
 
     try:
         strip = get_strip()
-        
-        # Run startup animation sequence
-        startup_sequence(strip, logger)
+
+        if _is_first_start():
+            logger.info("First start after boot — running startup animation.")
+            startup_sequence(strip, logger)
+        else:
+            logger.info("Restarting after failure — skipping startup animation.")
         
         metar_infos = get_metar_data()
         logger.info(f"Loaded weather data for {len(metar_infos)} airports")
