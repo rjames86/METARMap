@@ -69,8 +69,14 @@ class SunCalculator:
                 return 1.0
             
             dawn = sun_times["dawn"]
-            noon = sun_times["noon"] 
+            noon = sun_times["noon"]
             dusk = sun_times["dusk"]
+
+            # For locations where dusk falls after midnight UTC, astral returns the
+            # previous night's dusk as today's — it will be earlier than dawn.
+            # Add one day to get tonight's actual dusk.
+            if dusk < dawn:
+                dusk += datetime.timedelta(days=1)
 
             if current_time < dawn or current_time > dusk:
                 result = MIN_BRIGHTNESS
