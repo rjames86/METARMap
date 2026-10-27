@@ -240,7 +240,7 @@ class MetarInfos(defaultdict):
     
 def get_metar_data():
     stations = ",".join(AIRPORT_CODES)
-    url = f"https://aviationweather.gov/api/data/metar?ids={stations}&format=json&hours=1.5"
+    url = f"https://aviationweather.gov/api/data/metar?ids={stations}&format=json&hours=2"
 
     logger.info(f"Fetching METAR data for {len(AIRPORT_CODES)} airports")
     logger.debug(f"API URL: {url}")
